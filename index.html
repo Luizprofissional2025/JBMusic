@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>JBMUSIC</title>
+</head>
+<body>
+
+    <!-- NAV BAR SUPERIOR -->
+    <header class="header-navbar">
+        <ul class="nav-menu">
+            <li><a class="nav-link" href="#">Home</a></li>
+            <li><a class="nav-link" href="#">Minha historia</a></li>
+            <li><a class="nav-link" href="#">Projetos</a></li>
+        </ul>
+        <ul class="nav-menu">
+            <li><a class="nav-link" href="#">Agenda</a></li>
+            <li><a class="nav-link" href="#videos">Trabalhe conosco</a></li>
+        </ul>
+    </header>
+
+    <!-- SEÇÃO 1: CARROSSEL ACCORDION -->
+    <section class="accordion-section">
+        <div class="accordion-carousel">
+            <div class="drag-cursor-fluid">
+                <span>Arraste</span>
+            </div>
+            
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/samuel-2.webp');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Agenda</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Agende seu evento &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/samuel-1.webp');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Minha historia</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Saiba mais &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/copa.jpeg');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Projetos</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Venha conhecer &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/trabalheconosco.jpeg');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Trabalhe conosco</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Faça parte &rarr;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEÇÃO 2: GALERIA DE VÍDEOS -->
+    <section class="video-gallery-section" id="videos">
+        <div class="stage-container">
+            <div class="video-grid-wrapper">
+                <div class="video-grid">
+                    <div class="video-card" data-video-src="./videos/advec_bicão.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Advec Largo do bicão</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="advec cuba.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Advec cuba</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/assembleia_de_deus_deusreina.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Assembleia de Deus - Deus Reina</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/ad_remanescente.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Assembleia de Deus remanescente</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/assembleia_de_deus_avivah.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Assembleia de Deus - Avivah</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/advec_vigario_geral.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Advec vigário geral</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="person-container">
+                <img src="./images/samuel_ia.png" alt="Integrante do Ministério" class="person-image">
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL POPUP COM PLAYER DE VÍDEO LOCAL -->
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal-container">
+            <button class="close-btn" id="closeModal">&times;</button>
+            <div class="video-wrapper">
+                <video id="localVideoPlayer" controls preload="metadata">
+                    <source src="" type="video/mp4">
+                    Seu navegador não suporta a exibição de vídeos.
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT INTEGRADO -->
+    <script src="./index.js"></script>
+</body>
+</html>
