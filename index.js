@@ -1,136 +1,122 @@
-/* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
-        document.addEventListener('DOMContentLoaded', () => {
-            const videoSection = document.querySelector('.video-gallery-section');
+// ============================================
+// Ano no rodapé
+// ============================================
+document.getElementById('year').textContent = new Date().getFullYear();
 
-            const observerOptions = {
-                threshold: 0.15
-            };
+// ============================================
+// Menu mobile
+// ============================================
+const menuToggle = document.getElementById('menu-toggle');
+const mainNav = document.getElementById('main-nav');
 
-            const sectionObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        videoSection.classList.add('is-visible');
-                    }
-                });
-            }, observerOptions);
+menuToggle.addEventListener('click', () => {
+  mainNav.classList.toggle('is-open');
+});
 
-            sectionObserver.observe(videoSection);
-        });
+mainNav.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => mainNav.classList.remove('is-open'));
+});
 
-        /* --- SCRIPT 1B: SETAS DE NAVEGAÇÃO + PARALLAX DE FUNDO DO CARROSSEL --- */
-        document.addEventListener('DOMContentLoaded', () => {
-            const carousel = document.querySelector('.accordion-carousel');
-            const panels = Array.from(document.querySelectorAll('.accordion-panel'));
-            const prevBtn = document.querySelector('.carousel-nav.prev');
-            const nextBtn = document.querySelector('.carousel-nav.next');
+// ============================================
+// Cartões accordion — clique/toque (mobile e acessibilidade)
+// hover já é tratado só em CSS quando há mouse
+// ============================================
+const cards = document.querySelectorAll('.reveal-cards .card');
 
-            if (!carousel || panels.length === 0) return;
+function setActive(card){
+  cards.forEach(c => c.classList.toggle('is-active', c === card));
+}
 
-            let activeIndex = 0;
+const isCoarsePointer = window.matchMedia('(hover: none)').matches;
 
-            const setActive = (index) => {
-                activeIndex = (index + panels.length) % panels.length;
-                panels.forEach((panel, i) => {
-                    panel.classList.toggle('is-active', i === activeIndex);
-                });
-            };
+if (isCoarsePointer) {
+  // primeiro cartão ativo por padrão em telas de toque
+  setActive(cards[0]);
 
-            if (prevBtn) {
-                prevBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    setActive(activeIndex - 1);
-                });
-            }
+  cards.forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (!card.classList.contains('is-active')) {
+        e.preventDefault();
+        setActive(card);
+      }
+    });
+  });
+}
 
-            if (nextBtn) {
-                nextBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    setActive(activeIndex + 1);
-                });
-            }
+// ============================================
+// Newsletter (demonstração — sem backend)
+// ============================================
+const form = document.getElementById('newsletter-form');
+const note = document.getElementById('newsletter-note');
 
-            panels.forEach((panel, i) => {
-                const bg = panel.querySelector('.panel-background');
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const email = form.querySelector('input').value;
+  note.textContent = `Obrigado! Em breve novidades chegarão em ${email}.`;
+  form.reset();
+});
 
-                // Passar o mouse sincroniza as setas para continuarem a partir daqui
-                panel.addEventListener('mouseenter', () => {
-                    activeIndex = i;
-                });
+// ============================================
+// Chuva animada no hero (canvas leve)
+// ============================================
+const canvas = document.getElementById('rain-canvas');
+const ctx = canvas.getContext('2d');
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-                // Parallax sutil: a imagem de fundo acompanha o mouse dentro do painel
-                panel.addEventListener('mousemove', (e) => {
-                    if (!bg) return;
-                    const rect = panel.getBoundingClientRect();
-                    const px = ((e.clientX - rect.left) / rect.width - 0.5) * 2;  // -1 a 1
-                    const py = ((e.clientY - rect.top) / rect.height - 0.5) * 2;  // -1 a 1
-                    bg.style.setProperty('--px', `${px * 14}px`);
-                    bg.style.setProperty('--py', `${py * 14}px`);
-                });
+let drops = [];
+let rafId = null;
 
-                panel.addEventListener('mouseleave', () => {
-                    if (!bg) return;
-                    bg.style.setProperty('--px', '0px');
-                    bg.style.setProperty('--py', '0px');
-                });
-            });
-        });
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
 
-        /* --- SCRIPT 2: CURSOR FLUTUANTE DO CARROSSEL --- */
-        const customCursor = document.querySelector('.drag-cursor-fluid');
-        let posX = 0, posY = 0;     
-        let mouseX = 0, mouseY = 0; 
+function makeDrops(){
+  const count = Math.floor((canvas.width * canvas.height) / 22000);
+  drops = Array.from({ length: count }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    len: 10 + Math.random() * 18,
+    speed: 3 + Math.random() * 5,
+    opacity: 0.08 + Math.random() * 0.18
+  }));
+}
 
-        window.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
+function drawRain(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = 'rgba(160, 190, 240, 1)';
+  ctx.lineWidth = 1;
 
-        function animateCursor() {
-            posX += (mouseX - posX) * 0.1;
-            posY += (mouseY - posY) * 0.1;
+  drops.forEach(d => {
+    ctx.globalAlpha = d.opacity;
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x, d.y + d.len);
+    ctx.stroke();
 
-            if(customCursor) {
-                customCursor.style.left = `${posX}px`;
-                customCursor.style.top = `${posY}px`;
-            }
+    d.y += d.speed;
+    if (d.y > canvas.height) {
+      d.y = -d.len;
+      d.x = Math.random() * canvas.width;
+    }
+  });
 
-            requestAnimationFrame(animateCursor);
-        }
+  ctx.globalAlpha = 1;
+  rafId = requestAnimationFrame(drawRain);
+}
 
-        if (window.innerWidth > 1024) {
-            animateCursor();
-        }
+function startRain(){
+  resize();
+  makeDrops();
+  if (!prefersReducedMotion) {
+    cancelAnimationFrame(rafId);
+    drawRain();
+  }
+}
 
-        /* --- SCRIPT 3: MODAL E REPRODUÇÃO DE VÍDEO --- */
-        document.addEventListener('DOMContentLoaded', () => {
-            const cards = document.querySelectorAll('.video-card');
-            const modal = document.getElementById('videoModal');
-            const closeModal = document.getElementById('closeModal');
-            const videoPlayer = document.getElementById('localVideoPlayer');
+window.addEventListener('resize', () => {
+  resize();
+  makeDrops();
+});
 
-            cards.forEach(card => {
-                card.addEventListener('click', () => {
-                    const videoSrc = card.getAttribute('data-video-src');
-                    if (videoSrc) {
-                        videoPlayer.src = videoSrc;
-                        modal.classList.add('active');
-                        videoPlayer.play();
-                    }
-                });
-            });
-
-            const stopAndCloseVideo = () => {
-                modal.classList.remove('active');
-                videoPlayer.pause();
-                videoPlayer.currentTime = 0;
-                videoPlayer.src = '';
-            };
-
-            closeModal.addEventListener('click', stopAndCloseVideo);
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    stopAndCloseVideo();
-                }
-            });
-        });
+startRain();
