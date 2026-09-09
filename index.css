@@ -1,4 +1,4 @@
-        /* =========================================================================
+/* =========================================================================
            1. RESET DE ESTILOS & CONFIGURAÇÃO CORE
            ========================================================================= */
         * {
@@ -93,8 +93,17 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            transform: scale(1);
+            --px: 0px;
+            --py: 0px;
+            transform: scale(1) translate(var(--px), var(--py));
             transition: transform 0.8s cubic-bezier(0.25, 1, 0.3, 1);
+        }
+
+        /* Zoom sutil + parallax do fundo enquanto o painel está ativo/hover */
+        .accordion-panel:hover .panel-background,
+        .accordion-panel.is-active .panel-background {
+            transform: scale(1.12) translate(var(--px), var(--py));
+            transition: transform 1.2s cubic-bezier(0.25, 1, 0.3, 1);
         }
 
         .panel-overlay {
@@ -108,11 +117,13 @@
             transition: background 0.5s ease;
         }
 
-        .accordion-panel:hover {
+        .accordion-panel:hover,
+        .accordion-panel.is-active {
             flex: 4; 
         }   
 
-        .accordion-panel:hover .panel-overlay {
+        .accordion-panel:hover .panel-overlay,
+        .accordion-panel.is-active .panel-overlay {
             background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.85) 100%);
         }
 
@@ -141,7 +152,8 @@
             transition-delay: 0.1s;
         }
 
-        .accordion-panel:hover .panel-hidden-elements {
+        .accordion-panel:hover .panel-hidden-elements,
+        .accordion-panel.is-active .panel-hidden-elements {
             opacity: 1;
             transform: translateY(0);
         }
@@ -200,6 +212,47 @@
         .header-navbar:hover ~ .accordion-carousel .drag-cursor-fluid {
             transform: translate(-50%, -50%) scale(0);
             opacity: 0;
+        }
+
+        /* Setas de navegação do carrossel (aparecem ao passar o mouse) */
+        .carousel-nav-wrapper {
+            position: absolute;
+            top: 130px;
+            left: 40px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+        }
+
+        .accordion-carousel:hover .carousel-nav-wrapper {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .carousel-nav {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.55);
+            color: #ffffff;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .carousel-nav:hover {
+            background: #D89C48;
+            transform: scale(1.08);
         }
 
         /* =========================================================================
@@ -452,6 +505,10 @@
             }
 
             .drag-cursor-fluid {
+                display: none !important;
+            }
+
+            .carousel-nav-wrapper {
                 display: none !important;
             }
 
