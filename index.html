@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrossel + Cursor Customizado</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- =========================================================
+       CURSOR CUSTOMIZADO
+       Esse círculo segue o mouse pela tela via JavaScript.
+       Ele cresce e muda de cor quando passa sobre um elemento
+       que tenha a classe "cursor-hover" (veja script.js).
+  ========================================================== -->
+  <div class="custom-cursor" id="customCursor"></div>
+
+  <!-- =========================================================
+       CARROSSEL PRINCIPAL
+       Cada ".slide" é uma tela cheia com imagem de fundo,
+       título e botão. Troque a imagem, o título e o link
+       de cada slide para personalizar.
+  ========================================================== -->
+  <section class="carousel" id="carousel">
+
+    <div class="slides-track" id="slidesTrack">
+
+      <!-- Slide 1 -->
+      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1600&q=80');">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <span class="slide-eyebrow">Em breve</span>
+          <h2 class="slide-title">Eventos</h2>
+          <a href="#" class="slide-btn cursor-hover">Quero ir</a>
+        </div>
+      </article>
+
+      <!-- Slide 2 -->
+      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1600&q=80');">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <span class="slide-eyebrow">Cresça com a gente</span>
+          <h2 class="slide-title">Escola</h2>
+          <a href="#" class="slide-btn cursor-hover">Participe</a>
+        </div>
+      </article>
+
+      <!-- Slide 3 -->
+      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=1600&q=80');">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <span class="slide-eyebrow">Vagas limitadas</span>
+          <h2 class="slide-title">Conferência</h2>
+          <a href="#" class="slide-btn cursor-hover">Inscreva-se</a>
+        </div>
+      </article>
+
+      <!-- Slide 4 -->
+      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1600&q=80');">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <span class="slide-eyebrow">Toda semana</span>
+          <h2 class="slide-title">Estudos</h2>
+          <a href="#" class="slide-btn cursor-hover">Conheça tudo</a>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Setas de navegação -->
+    <button class="carousel-arrow arrow-prev cursor-hover" id="prevBtn" aria-label="Slide anterior">‹</button>
+    <button class="carousel-arrow arrow-next cursor-hover" id="nextBtn" aria-label="Próximo slide">›</button>
+
+    <!-- Bolinhas indicadoras -->
+    <div class="carousel-dots" id="carouselDots"></div>
+
+  </section>
+
+  <!-- Uma seção extra só para você testar o efeito do cursor fora do carrossel -->
+  <section class="demo-section">
+    <p>Passe o mouse sobre este texto <a href="#" class="cursor-hover">link de exemplo</a> para ver o cursor reagir.</p>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
