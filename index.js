@@ -1,4 +1,4 @@
-        /* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
+/* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const videoSection = document.querySelector('.video-gallery-section');
 
@@ -15,6 +15,64 @@
             }, observerOptions);
 
             sectionObserver.observe(videoSection);
+        });
+
+        /* --- SCRIPT 1B: SETAS DE NAVEGAÇÃO + PARALLAX DE FUNDO DO CARROSSEL --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            const carousel = document.querySelector('.accordion-carousel');
+            const panels = Array.from(document.querySelectorAll('.accordion-panel'));
+            const prevBtn = document.querySelector('.carousel-nav.prev');
+            const nextBtn = document.querySelector('.carousel-nav.next');
+
+            if (!carousel || panels.length === 0) return;
+
+            let activeIndex = 0;
+
+            const setActive = (index) => {
+                activeIndex = (index + panels.length) % panels.length;
+                panels.forEach((panel, i) => {
+                    panel.classList.toggle('is-active', i === activeIndex);
+                });
+            };
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setActive(activeIndex - 1);
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setActive(activeIndex + 1);
+                });
+            }
+
+            panels.forEach((panel, i) => {
+                const bg = panel.querySelector('.panel-background');
+
+                // Passar o mouse sincroniza as setas para continuarem a partir daqui
+                panel.addEventListener('mouseenter', () => {
+                    activeIndex = i;
+                });
+
+                // Parallax sutil: a imagem de fundo acompanha o mouse dentro do painel
+                panel.addEventListener('mousemove', (e) => {
+                    if (!bg) return;
+                    const rect = panel.getBoundingClientRect();
+                    const px = ((e.clientX - rect.left) / rect.width - 0.5) * 2;  // -1 a 1
+                    const py = ((e.clientY - rect.top) / rect.height - 0.5) * 2;  // -1 a 1
+                    bg.style.setProperty('--px', `${px * 14}px`);
+                    bg.style.setProperty('--py', `${py * 14}px`);
+                });
+
+                panel.addEventListener('mouseleave', () => {
+                    if (!bg) return;
+                    bg.style.setProperty('--px', '0px');
+                    bg.style.setProperty('--py', '0px');
+                });
+            });
         });
 
         /* --- SCRIPT 2: CURSOR FLUTUANTE DO CARROSSEL --- */
