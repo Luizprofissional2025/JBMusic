@@ -1,184 +1,544 @@
-/* =========================================================
-   VARIÁVEIS DE FÁCIL EDIÇÃO
-   Mude as cores e tempos aqui sem precisar mexer no resto.
-========================================================= */
-:root {
-  --cor-destaque: #d9772f;   /* cor principal (botões, cursor) */
-  --cor-texto: #ffffff;
-  --cor-overlay: rgba(10, 10, 10, 0.35); /* escurece a foto de fundo */
-  --tempo-transicao: 0.6s;    /* velocidade da troca de slide */
-  --tempo-autoplay: 6s;       /* intervalo do autoplay (usado no JS) */
-}
+        /* =========================================================================
+           1. RESET DE ESTILOS & CONFIGURAÇÃO CORE
+           ========================================================================= */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+        html, body {
+            width: 100%;
+            background-color: #000000;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            scroll-behavior: smooth;
+        }
 
-body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  cursor: none; /* escondemos o cursor padrão pra usar o customizado */
-}
+        /* =========================================================================
+           2. HEADER NAVBAR
+           ========================================================================= */
+        .header-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 40px;
+            gap: 40px;
+            z-index: 99;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+        }
 
-/* =========================================================
-   CURSOR CUSTOMIZADO
-========================================================= */
-.custom-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--cor-destaque);
-  pointer-events: none; /* deixa os cliques passarem "através" do cursor */
-  transform: translate(-50%, -50%);
-  transition: width 0.2s ease, height 0.2s ease, background 0.2s ease, opacity 0.2s ease;
-  z-index: 9999;
-  mix-blend-mode: difference; /* fica visível em fundos claros e escuros */
-}
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            list-style: none;
+        }
 
-/* Estado "grande" quando passa sobre algo clicável (classe cursor-hover) */
-.custom-cursor.hover-ativo {
-  width: 56px;
-  height: 56px;
-  background: var(--cor-texto);
-}
+        .nav-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: color 0.3s ease;
+        }
 
-/* Em telas de toque não faz sentido ter cursor customizado */
-@media (hover: none) {
-  .custom-cursor { display: none; }
-  body { cursor: auto; }
-}
+        .nav-link:hover {
+            color: #D89C48;
+        }
 
-/* =========================================================
-   CARROSSEL
-========================================================= */
-.carousel {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-}
+        /* =========================================================================
+           3. SEÇÃO 1: CARROSSEL ACCORDION HORIZONTAL
+           ========================================================================= */
+        .accordion-section {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background-color: #000000;
+        }
 
-.slides-track {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  transition: transform var(--tempo-transicao) ease-in-out;
-}
+        .accordion-carousel {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background-color: #000000;
+            cursor: none !important; 
+        }
 
-.slide {
-  position: relative;
-  flex: 0 0 100%;       /* cada slide ocupa 100% da largura */
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+        .accordion-panel {
+            position: relative;
+            flex: 1;
+            height: 100%;
+            overflow: hidden;
+            transition: flex 0.8s cubic-bezier(0.25, 1, 0.3, 1);
+            will-change: flex;
+        }
 
-.slide-overlay {
-  position: absolute;
-  inset: 0;
-  background: var(--cor-overlay);
-}
+        .panel-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transform: scale(1);
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.3, 1);
+        }
 
-.slide-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  color: var(--cor-texto);
-}
+        .panel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.85) 100%);
+            z-index: 2;
+            transition: background 0.5s ease;
+        }
 
-.slide-eyebrow {
-  display: inline-block;
-  font-size: 0.9rem;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-  opacity: 0.85;
-}
+        .accordion-panel:hover {
+            flex: 4; 
+        }   
 
-.slide-title {
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-}
+        .accordion-panel:hover .panel-overlay {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.85) 100%);
+        }
 
-.slide-btn {
-  display: inline-block;
-  padding: 0.9rem 2rem;
-  border: 2px solid var(--cor-texto);
-  color: var(--cor-texto);
-  text-decoration: none;
-  border-radius: 999px;
-  font-size: 0.95rem;
-  transition: background var(--tempo-transicao), color var(--tempo-transicao);
-}
+        .panel-content {
+            position: absolute;
+            bottom: 12%;
+            left: 40px;
+            right: 40px;
+            z-index: 3;
+            color: #ffffff;
+            pointer-events: none; 
+        }
 
-.slide-btn:hover {
-  background: var(--cor-texto);
-  color: #111;
-}
+        .panel-content h2 {
+            font-size: clamp(24px, 3vw, 42px);
+            font-weight: 700;
+            text-transform: capitalize;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
 
-/* Setas */
-.carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: var(--cor-texto);
-  font-size: 3rem;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 3;
-  padding: 0.5rem 1rem;
-}
+        .panel-hidden-elements {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s cubic-bezier(0.25, 1, 0.3, 1), transform 0.5s cubic-bezier(0.25, 1, 0.3, 1);
+            transition-delay: 0.1s;
+        }
 
-.arrow-prev { left: 1rem; }
-.arrow-next { right: 1rem; }
+        .accordion-panel:hover .panel-hidden-elements {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-/* Bolinhas */
-.carousel-dots {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0.6rem;
-  z-index: 3;
-}
+        .panel-clickable-link {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            cursor: none !important;
+        }
 
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
+        .btn-participate {
+            display: inline-block;
+            margin-top: 15px;
+            color: #D89C48;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+        }
 
-.dot.ativo {
-  background: var(--cor-texto);
-}
+        .drag-cursor-fluid {
+            position: fixed;
+            width: 90px;
+            height: 90px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            mix-blend-mode: difference;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.3, 1), opacity 0.4s ease;
+        }
 
-/* =========================================================
-   SEÇÃO DE DEMONSTRAÇÃO DO CURSOR
-========================================================= */
-.demo-section {
-  height: 50vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  text-align: center;
-  padding: 2rem;
-}
+        .drag-cursor-fluid span {
+            color: #000000; 
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: capitalize;
+        }
 
-.demo-section a {
-  color: var(--cor-destaque);
-}
+        .accordion-carousel:hover .drag-cursor-fluid {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .header-navbar:hover ~ .accordion-carousel .drag-cursor-fluid {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+        }
+
+        /* =========================================================================
+           4. SEÇÃO 2: GALERIA DE VÍDEOS (COM TRANSIÇÃO SUAVE SEM PERDER O PERSONAGEM)
+           ========================================================================= */
+        .video-gallery-section {
+            width: 100vw;
+            min-height: 100vh;
+            background-image: url("./images/fundo_musical.jpeg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* GRADIENTE DE SOMBREAMENTO NO TOPO PARA OCULTAR A LINHA DE CORTE */
+        .video-gallery-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 250px; /* Altura do desfoque/sombra na transição */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .stage-container {
+            width: 100%;
+            max-width: 1280px;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            position: relative;
+            padding-right: 50px;
+            z-index: 2;
+        }
+
+        /* MANTÉM OS ELEMENTOS ALINHADOS */
+        .video-grid-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 35%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            
+            opacity: 0;
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .person-container {
+            position: absolute;
+            right: 5%;
+            bottom: 0;
+            height: 90%;
+            z-index: 3;
+            pointer-events: none;
+            
+            opacity: 0;
+            transform: translate(60px, 0);
+            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+        }
+
+        .video-gallery-section.is-visible .video-grid-wrapper {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+
+        .video-gallery-section.is-visible .person-container {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 170px);
+            gap: 20px 40px;
+        }
+
+        .video-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px) scale(1.03);
+        }
+
+        .video-thumb {
+            width: 100%;
+            height: 110px;
+            background-color: #d1d5db;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .video-thumb span {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .play-icon {
+            position: absolute;
+            width: 38px;
+            height: 38px;
+            background: rgba(139, 92, 246, 0.95);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: scale(0.8);
+        }
+
+        .play-icon::after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6px 0 6px 10px;
+            border-color: transparent transparent transparent #ffffff;
+            margin-left: 2px;
+        }
+
+        .video-card:hover .play-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .video-title {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #ffffff;
+            text-align: center;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            max-width: 170px;
+        }
+
+        .person-image {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(-15px 0 25px rgba(0, 0, 0, 0.6));
+        }
+
+        /* =========================================================================
+           5. MODAL POPUP PARA VÍDEO LOCAL
+           ========================================================================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 999;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            width: 90%;
+            max-width: 800px;
+            background: #111118;
+            border: 1px solid #8b5cf6;
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 32px;
+            height: 32px;
+            background: #8b5cf6;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* =========================================================================
+           6. RESPONSIVIDADE
+           ========================================================================= */
+        @media screen and (max-width: 1024px) {
+            .header-navbar {
+                height: 80px;
+                padding: 0 20px;
+                gap: 20px;
+            }
+
+            .nav-menu {
+                gap: 20px;
+            }
+
+            .nav-link {
+                font-size: 12px;
+            }
+
+            .drag-cursor-fluid {
+                display: none !important;
+            }
+
+            .accordion-carousel, .panel-clickable-link {
+                cursor: auto !important;
+            }
+
+            .stage-container {
+                flex-direction: column;
+                justify-content: center;
+                padding: 40px 0;
+            }
+
+            .video-grid-wrapper {
+                position: relative;
+                top: 0;
+                left: 0;
+                transform: translateY(40px) !important;
+                margin-bottom: 40px;
+            }
+
+            .video-gallery-section.is-visible .video-grid-wrapper {
+                transform: translateY(0) !important;
+            }
+
+            .person-container {
+                position: relative;
+                right: 0;
+                height: 350px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .header-navbar {
+                position: absolute;
+                height: auto;
+                padding: 15px 10px;
+                flex-direction: column;
+                gap: 10px;
+                background: rgba(0, 0, 0, 0.9);
+            }
+
+            .nav-menu {
+                gap: 15px;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .nav-link {
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+
+            .accordion-section {
+                height: auto;
+            }
+
+            .accordion-carousel {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                width: 100vw;
+            }
+
+            .accordion-panel {
+                flex: none !important;
+                width: 100%;
+                height: 40vh;
+            }
+
+            .panel-hidden-elements {
+                opacity: 1 !important;
+                transform: translateY(0) !important;
+            }
+
+            .panel-content {
+                bottom: 15%;
+                left: 25px;
+                right: 25px;
+            }
+
+            .panel-content h2 {
+                font-size: 28px;
+            }
+
+            .btn-participate {
+                margin-top: 8px;
+                font-size: 12px;
+            }
+        }
