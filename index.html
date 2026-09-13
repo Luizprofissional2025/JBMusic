@@ -1,87 +1,158 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carrossel + Cursor Customizado</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>JBMUSIC</title>
 </head>
 <body>
 
-  <!-- =========================================================
-       CURSOR CUSTOMIZADO
-       Esse círculo segue o mouse pela tela via JavaScript.
-       Ele cresce e muda de cor quando passa sobre um elemento
-       que tenha a classe "cursor-hover" (veja script.js).
-  ========================================================== -->
-  <div class="custom-cursor" id="customCursor"></div>
+    <!-- NAV BAR SUPERIOR -->
+    <header class="header-navbar">
+        <ul class="nav-menu">
+            <li><a class="nav-link" href="#">Home</a></li>
+            <li><a class="nav-link" href="#">Minha historia</a></li>
+            <li><a class="nav-link" href="#">Projetos</a></li>
+        </ul>
+        <ul class="nav-menu">
+            <li><a class="nav-link" href="#">Agenda</a></li>
+            <li><a class="nav-link" href="#videos">Trabalhe conosco</a></li>
+        </ul>
+    </header>
 
-  <!-- =========================================================
-       CARROSSEL PRINCIPAL
-       Cada ".slide" é uma tela cheia com imagem de fundo,
-       título e botão. Troque a imagem, o título e o link
-       de cada slide para personalizar.
-  ========================================================== -->
-  <section class="carousel" id="carousel">
+    <!-- SEÇÃO 1: CARROSSEL ACCORDION -->
+    <section class="accordion-section">
+        <div class="accordion-carousel">
+            <div class="drag-cursor-fluid">
+                <span>Arraste</span>
+            </div>
+            
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/samuel-2.webp');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Agenda</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Agende seu evento &rarr;</span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="slides-track" id="slidesTrack">
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/samuel-1.webp');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Minha historia</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Saiba mais &rarr;</span>
+                    </div>
+                </div>
+            </div>
 
-      <!-- Slide 1 -->
-      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1600&q=80');">
-        <div class="slide-overlay"></div>
-        <div class="slide-content">
-          <span class="slide-eyebrow">Em breve</span>
-          <h2 class="slide-title">Eventos</h2>
-          <a href="#" class="slide-btn cursor-hover">Quero ir</a>
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/copa.jpeg');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Projetos</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Venha conhecer &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-panel">
+                <div class="panel-background" style="background-image: url('./images/trabalheconosco.jpeg');"></div>
+                <div class="panel-overlay"></div>
+                <a href="" class="panel-clickable-link"></a>
+                <div class="panel-content">
+                    <h2>Trabalhe conosco</h2>
+                    <div class="panel-hidden-elements">
+                        <span class="btn-participate">Faça parte &rarr;</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </article>
+    </section>
 
-      <!-- Slide 2 -->
-      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1600&q=80');">
-        <div class="slide-overlay"></div>
-        <div class="slide-content">
-          <span class="slide-eyebrow">Cresça com a gente</span>
-          <h2 class="slide-title">Escola</h2>
-          <a href="#" class="slide-btn cursor-hover">Participe</a>
+    <!-- SEÇÃO 2: GALERIA DE VÍDEOS -->
+    <section class="video-gallery-section" id="videos">
+        <div class="stage-container">
+            <div class="video-grid-wrapper">
+                <div class="video-grid">
+                    <div class="video-card" data-video-src="./videos/advec_bicão.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Advec Largo do bicão</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/advec_cuba.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Advec cuba</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/assembleia_de_deus_deusreina.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Assembleia de Deus - Deus Reina</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/ad_remanescente.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Assembleia de Deus remanescente</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/assembleia_de_deus_avivah.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Assembleia de Deus - Avivah</div>
+                    </div>
+
+                    <div class="video-card" data-video-src="./videos/advec_vigario_geral.mp4">
+                        <div class="video-thumb">
+                            <span>Video</span>
+                            <div class="play-icon"></div>
+                        </div>
+                        <div class="video-title">Advec vigário geral</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="person-container">
+                <img src="./images/samuel_ia.png" alt="Integrante do Ministério" class="person-image">
+            </div>
         </div>
-      </article>
+    </section>
 
-      <!-- Slide 3 -->
-      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=1600&q=80');">
-        <div class="slide-overlay"></div>
-        <div class="slide-content">
-          <span class="slide-eyebrow">Vagas limitadas</span>
-          <h2 class="slide-title">Conferência</h2>
-          <a href="#" class="slide-btn cursor-hover">Inscreva-se</a>
+    <!-- MODAL POPUP COM PLAYER DE VÍDEO LOCAL -->
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal-container">
+            <button class="close-btn" id="closeModal">&times;</button>
+            <div class="video-wrapper">
+                <video id="localVideoPlayer" controls preload="metadata">
+                    <source src="" type="video/mp4">
+                    Seu navegador não suporta a exibição de vídeos.
+                </video>
+            </div>
         </div>
-      </article>
-
-      <!-- Slide 4 -->
-      <article class="slide" style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1600&q=80');">
-        <div class="slide-overlay"></div>
-        <div class="slide-content">
-          <span class="slide-eyebrow">Toda semana</span>
-          <h2 class="slide-title">Estudos</h2>
-          <a href="#" class="slide-btn cursor-hover">Conheça tudo</a>
-        </div>
-      </article>
-
     </div>
 
-    <!-- Setas de navegação -->
-    <button class="carousel-arrow arrow-prev cursor-hover" id="prevBtn" aria-label="Slide anterior">‹</button>
-    <button class="carousel-arrow arrow-next cursor-hover" id="nextBtn" aria-label="Próximo slide">›</button>
-
-    <!-- Bolinhas indicadoras -->
-    <div class="carousel-dots" id="carouselDots"></div>
-
-  </section>
-
-  <!-- Uma seção extra só para você testar o efeito do cursor fora do carrossel -->
-  <section class="demo-section">
-    <p>Passe o mouse sobre este texto <a href="#" class="cursor-hover">link de exemplo</a> para ver o cursor reagir.</p>
-  </section>
-
-  <script src="script.js"></script>
+    <!-- JAVASCRIPT INTEGRADO -->
+    <script src="./index.js"></script>
 </body>
 </html>
