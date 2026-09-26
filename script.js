@@ -1,4 +1,4 @@
-        /* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
+/* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const videoSection = document.querySelector('.video-gallery-section');
 
@@ -75,4 +75,27 @@
                     stopAndCloseVideo();
                 }
             });
+        });
+
+        /* --- SCRIPT 4: FORMULÁRIO DE CONTATO -> WHATSAPP --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            const whatsappForm = document.getElementById('whatsappForm');
+            const WHATSAPP_NUMBER = '5521990738646'; // 55 + DDD 21 + número
+
+            if (whatsappForm) {
+                whatsappForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const name = document.getElementById('formName').value.trim();
+                    const message = document.getElementById('formMessage').value.trim();
+
+                    if (!name || !message) return;
+
+                    const text = `Olá, meu nome é ${name}.\n\n${message}`;
+                    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+
+                    window.open(whatsappUrl, '_blank');
+                    whatsappForm.reset();
+                });
+            }
         });
