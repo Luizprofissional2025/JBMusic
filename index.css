@@ -1123,6 +1123,17 @@
             font-size: 14px;
         }
 
+        /* Campo-isca invisível: só robôs preenchem */
+        .jb-honeypot {
+            position: absolute !important;
+            width: 1px; height: 1px;
+            padding: 0; margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         /* AVISO DE CONFIRMAÇÃO DA AGENDA (DESCE DO TOPO DA PÁGINA) */
         .agenda-toast {
             position: fixed;
@@ -1145,6 +1156,15 @@
 
         .agenda-toast.show {
             transform: translate(-50%, 0);
+        }
+
+        .agenda-toast.is-error {
+            border-color: rgba(255, 107, 107, 0.5);
+        }
+
+        .agenda-toast.is-error .agenda-toast-icon {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
         }
 
         .agenda-toast-icon {
