@@ -1,8 +1,4 @@
-/* Número que recebe os avisos de AGENDA e TRABALHE CONOSCO (55 + DDD 21 + 977041825).
-           Para trocar o destino, altere apenas esta linha. */
-        const JB_WHATSAPP_AVISOS = '5521977041825';
-
-        /* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
+/* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const videoSection = document.querySelector('.video-gallery-section');
             if (!videoSection) return;
@@ -107,43 +103,40 @@
             }
         });
 
-        /* --- SCRIPT 5: FORMULÁRIO "TRABALHE CONOSCO" -> WHATSAPP --- */
+        /* --- SCRIPT 5: FORMULÁRIO "TRABALHE CONOSCO" (AVISO AUTOMÁTICO NO WHATSAPP DO MÚSICO) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const tcForm = document.getElementById('trabalheForm');
-            const WHATSAPP_NUMBER = JB_WHATSAPP_AVISOS;
 
             if (tcForm) {
-                tcForm.addEventListener('submit', (e) => {
+                tcForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     if (!jbValidate(tcForm)) return;
 
-                    const nome = document.getElementById('tcNome').value.trim();
-                    const contato = document.getElementById('tcContato').value.trim();
-                    const idade = document.getElementById('tcIdade').value.trim();
-                    const email = document.getElementById('tcEmail').value.trim();
-                    const endereco = document.getElementById('tcEndereco').value.trim();
-                    const igreja = document.getElementById('tcIgreja').value.trim();
-                    const enderecoIgreja = document.getElementById('tcEnderecoIgreja').value.trim();
-                    const mensagem = document.getElementById('tcMensagem').value.trim();
+                    const g = id => document.getElementById(id).value.trim();
+                    const btn = tcForm.querySelector('button[type="submit"]');
+                    const payload = {
+                        tipo: 'trabalhe',
+                        nome: g('tcNome'),
+                        contato: g('tcContato'),
+                        idade: g('tcIdade'),
+                        email: g('tcEmail'),
+                        endereco: g('tcEndereco'),
+                        igreja: g('tcIgreja'),
+                        enderecoIgreja: g('tcEnderecoIgreja'),
+                        mensagem: g('tcMensagem'),
+                        website: jbIsca(tcForm)
+                    };
 
-                    if (!nome || !contato) return;
+                    jbSetLoading(btn, true);
+                    const ok = await jbEnviar(payload);
+                    jbSetLoading(btn, false);
 
-                    const text =
-                        `🎤 *NOVA INSCRIÇÃO - TRABALHE CONOSCO*\n` +
-                        `${jbOrigin('Trabalhe conosco')}\n\n` +
-                        `👤 *Nome:* ${nome}\n` +
-                        `📞 *Contato:* ${contato}\n` +
-                        `🎂 *Idade:* ${idade}\n` +
-                        `✉️ *E-mail:* ${email}\n` +
-                        `🏠 *Endereço:* ${endereco}\n` +
-                        `⛪ *Igreja:* ${igreja}\n` +
-                        `📌 *Endereço da igreja:* ${enderecoIgreja}\n\n` +
-                        `💬 *Sobre mim:* ${mensagem}`;
-
-                    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-
-                    window.open(whatsappUrl, '_blank');
-                    jbSubmitted(tcForm);
+                    if (ok) {
+                        jbSubmitted(tcForm);
+                        jbToast('Inscrição enviada!', 'Recebemos seus dados e entraremos em contato em breve.');
+                    } else {
+                        jbToast('Não foi possível enviar', 'Tente novamente em instantes.', 'erro');
+                    }
                 });
             }
         });
@@ -166,8 +159,6 @@
             const agendaPrevMonth = document.getElementById('agendaPrevMonth');
             const agendaNextMonth = document.getElementById('agendaNextMonth');
             const agendaTodayBtn = document.getElementById('agendaTodayBtn');
-            const agendaToast = document.getElementById('agendaToast');
-            const agendaToastClose = document.getElementById('agendaToastClose');
 
             if (!agendaList || !agendaMonthLabel) return;
 
@@ -259,22 +250,6 @@
                 agendaList.innerHTML = cabecalho + html;
             }
 
-            function showAgendaToast() {
-                if (!agendaToast) return;
-                agendaToast.classList.add('show');
-                clearTimeout(agendaToast._hideTimeout);
-                agendaToast._hideTimeout = setTimeout(() => {
-                    agendaToast.classList.remove('show');
-                }, 6000);
-            }
-
-            if (agendaToastClose) {
-                agendaToastClose.addEventListener('click', () => {
-                    agendaToast.classList.remove('show');
-                    clearTimeout(agendaToast._hideTimeout);
-                });
-            }
-
             if (agendaPrevMonth) {
                 agendaPrevMonth.addEventListener('click', () => {
                     viewDate.setMonth(viewDate.getMonth() - 1);
@@ -298,10 +273,11 @@
             }
 
             if (agendaForm) {
-                agendaForm.addEventListener('submit', (e) => {
+                agendaForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     if (!jbValidate(agendaForm)) return;
 
+                    const btn = agendaForm.querySelector('button[type="submit"]');
                     const agenda = {
                         nome: document.getElementById('agendaNome').value.trim(),
                         cargo: document.getElementById('agendaCargo').value.trim(),
@@ -314,6 +290,15 @@
 
                     if (!agenda.nome || !agenda.igreja || !agenda.data) return;
 
+                    jbSetLoading(btn, true);
+                    const ok = await jbEnviar({ tipo: 'agenda', ...agenda, website: jbIsca(agendaForm) });
+                    jbSetLoading(btn, false);
+
+                    if (!ok) {
+                        jbToast('Não foi possível enviar', 'Tente novamente em instantes.', 'erro');
+                        return;
+                    }
+
                     saveAgenda(agenda);
 
                     const [y, m] = agenda.data.split('-').map(Number);
@@ -321,23 +306,7 @@
                     renderAgendaList();
 
                     jbSubmitted(agendaForm);
-
-                    if (agendaToast) {
-                        showAgendaToast();
-                    }
-
-                    const [ay, am, ad] = agenda.data.split('-').map(Number);
-                    const diaSemana = DIAS_SEMANA[new Date(ay, am - 1, ad).getDay()];
-                    const textoAgenda =
-                        `📅 *NOVA SOLICITAÇÃO DE AGENDA*\n` +
-                        `${jbOrigin('Agenda')}\n\n` +
-                        `⛪ *Igreja:* ${agenda.igreja}\n` +
-                        `📌 *Endereço:* ${agenda.endereco}\n` +
-                        `📆 *Dia:* ${String(ad).padStart(2, '0')}/${String(am).padStart(2, '0')}/${ay} (${diaSemana})\n` +
-                        `🕒 *Horário:* ${agenda.horario}\n` +
-                        `👤 *Responsável:* ${agenda.nome} (${agenda.cargo})\n` +
-                        `📞 *Contato:* ${agenda.contato}`;
-                    window.open(`https://wa.me/${JB_WHATSAPP_AVISOS}?text=${encodeURIComponent(textoAgenda)}`, '_blank');
+                    jbToast('Agenda enviada!', 'Sua agenda foi enviada e será avaliada e confirmada pelo WhatsApp.');
                 });
             }
 
@@ -370,11 +339,57 @@
             form.reset();
             form.classList.remove('was-validated');
             form.querySelectorAll('textarea[data-counter]').forEach(t => t.dispatchEvent(new Event('input')));
-            const btn = form.querySelector('button[type="submit"]');
-            if (btn) {
-                btn.classList.add('is-loading');
-                setTimeout(() => btn.classList.remove('is-loading'), 900);
+        }
+
+        function jbSetLoading(btn, ativo) {
+            if (!btn) return;
+            btn.disabled = ativo;
+            btn.classList.toggle('is-loading', ativo);
+        }
+
+        function jbIsca(form) {
+            const campo = form.querySelector('[name="website"]');
+            return campo ? campo.value : '';
+        }
+
+        /* Envia os dados para a função /api/notificar, que avisa o músico no WhatsApp. */
+        async function jbEnviar(payload) {
+            if (window.JB_PREVIEW) {
+                await new Promise(r => setTimeout(r, 700));
+                return true;
             }
+            try {
+                const resposta = await fetch('/api/notificar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...payload, origem: location.href.split(/[?#]/)[0] })
+                });
+                const dados = await resposta.json().catch(() => ({}));
+                return resposta.ok && dados.ok === true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        /* Aviso que desce do topo (sucesso ou erro) */
+        function jbToast(titulo, texto, tipo) {
+            let t = document.getElementById('jbToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'jbToast';
+                t.className = 'agenda-toast';
+                t.setAttribute('role', 'status');
+                t.innerHTML = '<div class="agenda-toast-icon"></div><div class="agenda-toast-text"><strong></strong><span></span></div><button type="button" class="agenda-toast-close" aria-label="Fechar aviso">&times;</button>';
+                document.body.appendChild(t);
+                t.querySelector('.agenda-toast-close').addEventListener('click', () => t.classList.remove('show'));
+            }
+            t.classList.toggle('is-error', tipo === 'erro');
+            t.querySelector('.agenda-toast-icon').innerHTML = tipo === 'erro' ? '&#33;' : '&#10003;';
+            t.querySelector('strong').textContent = titulo;
+            t.querySelector('span').textContent = texto;
+            t.classList.add('show');
+            clearTimeout(t._hide);
+            t._hide = setTimeout(() => t.classList.remove('show'), 6500);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
