@@ -1,6 +1,7 @@
-        /* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
+/* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const videoSection = document.querySelector('.video-gallery-section');
+            if (!videoSection) return;
 
             const observerOptions = {
                 threshold: 0.15
@@ -22,25 +23,25 @@
         let posX = 0, posY = 0;     
         let mouseX = 0, mouseY = 0; 
 
-        window.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
+        if (customCursor) {
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
 
-        function animateCursor() {
-            posX += (mouseX - posX) * 0.1;
-            posY += (mouseY - posY) * 0.1;
+            function animateCursor() {
+                posX += (mouseX - posX) * 0.1;
+                posY += (mouseY - posY) * 0.1;
 
-            if(customCursor) {
                 customCursor.style.left = `${posX}px`;
                 customCursor.style.top = `${posY}px`;
+
+                requestAnimationFrame(animateCursor);
             }
 
-            requestAnimationFrame(animateCursor);
-        }
-
-        if (window.innerWidth > 1024) {
-            animateCursor();
+            if (window.innerWidth > 1024) {
+                animateCursor();
+            }
         }
 
         /* --- SCRIPT 3: MODAL E REPRODUÇÃO DE VÍDEO --- */
@@ -49,6 +50,8 @@
             const modal = document.getElementById('videoModal');
             const closeModal = document.getElementById('closeModal');
             const videoPlayer = document.getElementById('localVideoPlayer');
+
+            if (!modal || !closeModal || !videoPlayer) return;
 
             cards.forEach(card => {
                 card.addEventListener('click', () => {
@@ -108,6 +111,7 @@
             if (tcForm) {
                 tcForm.addEventListener('submit', (e) => {
                     e.preventDefault();
+                    if (!jbValidate(tcForm)) return;
 
                     const nome = document.getElementById('tcNome').value.trim();
                     const contato = document.getElementById('tcContato').value.trim();
@@ -132,7 +136,7 @@
                     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 
                     window.open(whatsappUrl, '_blank');
-                    tcForm.reset();
+                    jbSubmitted(tcForm);
                 });
             }
         });
@@ -144,10 +148,24 @@
                 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
             ];
+            const DIAS_SEMANA = [
+                'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+                'Quinta-feira', 'Sexta-feira', 'Sábado'
+            ];
 
             const agendaForm = document.getElementById('agendaForm');
-            const agendaAccordion = document.getElementById('agendaAccordion');
-            const agendaConfirmModalEl = document.getElementById('agendaConfirmModal');
+            const agendaList = document.getElementById('agendaList');
+            const agendaMonthLabel = document.getElementById('agendaMonthLabel');
+            const agendaPrevMonth = document.getElementById('agendaPrevMonth');
+            const agendaNextMonth = document.getElementById('agendaNextMonth');
+            const agendaTodayBtn = document.getElementById('agendaTodayBtn');
+            const agendaToast = document.getElementById('agendaToast');
+            const agendaToastClose = document.getElementById('agendaToastClose');
+
+            if (!agendaList || !agendaMonthLabel) return;
+
+            let viewDate = new Date();
+            viewDate.setDate(1);
 
             function getAgendas() {
                 try {
@@ -164,84 +182,114 @@
                 localStorage.setItem(AGENDA_KEY, JSON.stringify(agendas));
             }
 
-            function formatDate(dateStr) {
-                const partes = dateStr.split('-');
-                if (partes.length !== 3) return dateStr;
-                const [ano, mes, dia] = partes;
-                return `${dia}/${mes}/${ano}`;
-            }
-
             function escapeHtml(str) {
                 const div = document.createElement('div');
                 div.textContent = str || '';
                 return div.innerHTML;
             }
 
-            function renderAgendas() {
-                if (!agendaAccordion) return;
+            function renderAgendaList() {
+                const ano = viewDate.getFullYear();
+                const mes = viewDate.getMonth(); // 0-11
 
-                const agendas = getAgendas();
-                agendaAccordion.innerHTML = '';
+                agendaMonthLabel.textContent = `${MESES[mes]} de ${ano}`;
 
-                MESES.forEach((mesNome, index) => {
-                    const numeroMes = index + 1;
+                const doMes = getAgendas()
+                    .filter(a => {
+                        if (!a.data) return false;
+                        const [y, m] = a.data.split('-').map(Number);
+                        return y === ano && (m - 1) === mes;
+                    })
+                    .sort((a, b) => a.data.localeCompare(b.data));
 
-                    const itensDoMes = agendas
-                        .filter(a => a.data && parseInt(a.data.split('-')[1], 10) === numeroMes)
-                        .sort((a, b) => a.data.localeCompare(b.data));
+                if (doMes.length === 0) {
+                    agendaList.innerHTML = `<div class="agenda-empty">Nenhum evento agendado em ${MESES[mes].toLowerCase()}.</div>`;
+                    return;
+                }
 
-                    const collapseId = `mes-${numeroMes}`;
+                const grupos = {};
+                doMes.forEach(a => {
+                    if (!grupos[a.data]) grupos[a.data] = [];
+                    grupos[a.data].push(a);
+                });
 
-                    let linhas = '';
-                    if (itensDoMes.length === 0) {
-                        linhas = `<tr><td colspan="5" class="text-center text-muted py-3">Nenhuma agenda para ${mesNome}</td></tr>`;
-                    } else {
-                        itensDoMes.forEach(a => {
-                            linhas += `
-                                <tr>
-                                    <td>${formatDate(a.data)}</td>
-                                    <td>${escapeHtml(a.horario)}</td>
-                                    <td>${escapeHtml(a.igreja)}</td>
-                                    <td>${escapeHtml(a.nome)} <span class="text-muted">(${escapeHtml(a.cargo)})</span></td>
-                                    <td>${escapeHtml(a.contato)}</td>
-                                </tr>`;
-                        });
-                    }
+                let html = '';
+                Object.keys(grupos).sort().forEach(dataStr => {
+                    const [y, m, d] = dataStr.split('-').map(Number);
+                    const dateObj = new Date(y, m - 1, d);
+                    const diaSemana = DIAS_SEMANA[dateObj.getDay()];
 
-                    const item = document.createElement('div');
-                    item.className = 'accordion-item';
-                    item.innerHTML = `
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
-                                ${mesNome} <span class="badge-count ms-2">${itensDoMes.length}</span>
-                            </button>
-                        </h2>
-                        <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#agendaAccordion">
-                            <div class="accordion-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-dark table-hover align-middle mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Data</th>
-                                                <th>Horário</th>
-                                                <th>Igreja</th>
-                                                <th>Responsável</th>
-                                                <th>Contato</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>${linhas}</tbody>
-                                    </table>
+                    let eventosHtml = '';
+                    grupos[dataStr].forEach(a => {
+                        eventosHtml += `
+                            <div class="agenda-event-row">
+                                <span class="agenda-dot"></span>
+                                <div class="agenda-event-main">
+                                    <span class="agenda-event-church">${escapeHtml(a.igreja)}</span>
+                                    <span class="agenda-event-cargo">${escapeHtml(a.cargo)}</span>
                                 </div>
-                            </div>
-                        </div>`;
+                                <div class="agenda-event-side">
+                                    <span class="agenda-event-time">${escapeHtml(a.horario)}</span>
+                                    <span class="agenda-event-name">${escapeHtml(a.nome)}</span>
+                                </div>
+                            </div>`;
+                    });
 
-                    agendaAccordion.appendChild(item);
+                    html += `
+                        <div class="agenda-date-group">
+                            <div class="agenda-date-row">
+                                <span class="agenda-date-text">${d} de ${MESES[m - 1]} de ${y}</span>
+                                <span class="agenda-weekday">${diaSemana}</span>
+                            </div>
+                            <div class="agenda-events">${eventosHtml}</div>
+                        </div>`;
+                });
+
+                agendaList.innerHTML = html;
+            }
+
+            function showAgendaToast() {
+                if (!agendaToast) return;
+                agendaToast.classList.add('show');
+                clearTimeout(agendaToast._hideTimeout);
+                agendaToast._hideTimeout = setTimeout(() => {
+                    agendaToast.classList.remove('show');
+                }, 6000);
+            }
+
+            if (agendaToastClose) {
+                agendaToastClose.addEventListener('click', () => {
+                    agendaToast.classList.remove('show');
+                    clearTimeout(agendaToast._hideTimeout);
+                });
+            }
+
+            if (agendaPrevMonth) {
+                agendaPrevMonth.addEventListener('click', () => {
+                    viewDate.setMonth(viewDate.getMonth() - 1);
+                    renderAgendaList();
+                });
+            }
+
+            if (agendaNextMonth) {
+                agendaNextMonth.addEventListener('click', () => {
+                    viewDate.setMonth(viewDate.getMonth() + 1);
+                    renderAgendaList();
+                });
+            }
+
+            if (agendaTodayBtn) {
+                agendaTodayBtn.addEventListener('click', () => {
+                    viewDate = new Date();
+                    viewDate.setDate(1);
+                    renderAgendaList();
                 });
             }
 
             if (agendaForm) {
                 agendaForm.addEventListener('submit', (e) => {
                     e.preventDefault();
+                    if (!jbValidate(agendaForm)) return;
 
                     const agenda = {
                         nome: document.getElementById('agendaNome').value.trim(),
@@ -255,15 +303,88 @@
                     if (!agenda.nome || !agenda.igreja || !agenda.data) return;
 
                     saveAgenda(agenda);
-                    renderAgendas();
-                    agendaForm.reset();
 
-                    if (agendaConfirmModalEl && window.bootstrap) {
-                        const confirmModal = new bootstrap.Modal(agendaConfirmModalEl);
-                        confirmModal.show();
+                    const [y, m] = agenda.data.split('-').map(Number);
+                    viewDate = new Date(y, m - 1, 1);
+                    renderAgendaList();
+
+                    jbSubmitted(agendaForm);
+
+                    if (agendaToast) {
+                        showAgendaToast();
                     }
                 });
             }
 
-            renderAgendas();
+            renderAgendaList();
+        });
+
+        /* --- SCRIPT 7: CARDS DE PROJETOS EXPANSÍVEIS AO CLICAR --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.projeto-card.is-expandable').forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('active');
+                });
+            });
+        });
+
+
+        /* --- SCRIPT 8: INTERAÇÃO DOS FORMULÁRIOS (VALIDAÇÃO BOOTSTRAP, MÁSCARA, CONTADOR) --- */
+        function jbValidate(form) {
+            if (form.checkValidity()) return true;
+            form.classList.add('was-validated');
+            const firstInvalid = form.querySelector(':invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus({ preventScroll: true });
+            }
+            return false;
+        }
+
+        function jbSubmitted(form) {
+            form.reset();
+            form.classList.remove('was-validated');
+            form.querySelectorAll('textarea[data-counter]').forEach(t => t.dispatchEvent(new Event('input')));
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.classList.add('is-loading');
+                setTimeout(() => btn.classList.remove('is-loading'), 900);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Máscara de telefone brasileiro: (21) 99999-9999
+            document.querySelectorAll('input[data-mask="phone"]').forEach(input => {
+                input.addEventListener('input', () => {
+                    let v = input.value.replace(/\D/g, '').slice(0, 11);
+                    if (v.length > 6) {
+                        v = v.length > 10
+                            ? `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`
+                            : `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+                    } else if (v.length > 2) {
+                        v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+                    } else if (v.length > 0) {
+                        v = `(${v}`;
+                    }
+                    input.value = v;
+                });
+            });
+
+            // Contador de caracteres dos campos de texto longo
+            document.querySelectorAll('textarea[data-counter]').forEach(area => {
+                const counter = document.getElementById(area.getAttribute('data-counter'));
+                if (!counter) return;
+                const update = () => { counter.textContent = area.value.length; };
+                area.addEventListener('input', update);
+                update();
+            });
+
+            // Não permitir agendar datas no passado
+            const agendaData = document.getElementById('agendaData');
+            if (agendaData) {
+                const hoje = new Date();
+                const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+                const dd = String(hoje.getDate()).padStart(2, '0');
+                agendaData.min = `${hoje.getFullYear()}-${mm}-${dd}`;
+            }
         });
