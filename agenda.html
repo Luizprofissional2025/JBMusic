@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <title>JBMUSIC - Agenda</title>
+</head>
+<body>
+
+    <!-- NAV BAR SUPERIOR -->
+    <header class="header-navbar">
+        <ul class="nav-menu">
+            <li><a class="nav-link" href="index.html">Home</a></li>
+            <li><a class="nav-link" href="historia.html">Minha historia</a></li>
+            <li><a class="nav-link" href="projetos.html">Projetos</a></li>
+        </ul>
+        <ul class="nav-menu">
+            <li><a class="nav-link active" href="agenda.html">Agenda</a></li>
+            <li><a class="nav-link" href="trabalhe-conosco.html">Trabalhe conosco</a></li>
+        </ul>
+    </header>
+
+<!-- SEÇÃO: AGENDA -->
+    <section class="agenda-section py-5" id="agenda">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="section-label justify-content-center">Agenda</span>
+                <h2>Agende sua igreja</h2>
+                <p class="section-intro mx-auto">Preencha os dados abaixo para solicitar uma apresentação em sua igreja. Sua solicitação será avaliada e confirmada diretamente pelo WhatsApp.</p>
+            </div>
+
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-9 col-xl-8">
+                    <div class="form-card">
+                        <div class="form-card-head text-center">
+                            <div class="form-card-icon"><svg viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zM5 10h14v9H5v-9z"/></svg></div>
+                            <h3>Solicitar agenda</h3>
+                            <p>Informe os dados do responsável e do evento. Confirmamos pelo WhatsApp.</p>
+                        </div>
+                        <form id="agendaForm" class="site-form needs-validation" novalidate>
+                            <div class="form-group-title"><span>1</span> Responsável</div>
+                            <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="agendaNome" placeholder="Seu nome" required autocomplete="name">
+                                    <label for="agendaNome">Seu nome</label>
+                                    <div class="invalid-feedback">Informe seu nome.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="agendaCargo" placeholder="Seu cargo na igreja" required >
+                                    <label for="agendaCargo">Seu cargo na igreja</label>
+                                    <div class="invalid-feedback">Informe seu cargo.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="agendaIgreja" placeholder="Qual igreja" required >
+                                    <label for="agendaIgreja">Qual igreja</label>
+                                    <div class="invalid-feedback">Informe o nome da igreja.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control" id="agendaContato" placeholder="Contato (WhatsApp)" required inputmode="numeric" data-mask="phone" minlength="14" maxlength="15">
+                                    <label for="agendaContato">Contato (WhatsApp)</label>
+                                    <div class="invalid-feedback">Informe um telefone válido com DDD.</div>
+                                </div>
+                            </div>
+                            </div>
+
+                            <div class="form-group-title mt-4"><span>2</span> Evento</div>
+                            <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" id="agendaData" placeholder="Dia do evento" required >
+                                    <label for="agendaData">Dia do evento</label>
+                                    <div class="invalid-feedback">Escolha o dia do evento.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="time" class="form-control" id="agendaHorario" placeholder="Horário do evento" required >
+                                    <label for="agendaHorario">Horário do evento</label>
+                                    <div class="invalid-feedback">Escolha o horário.</div>
+                                </div>
+                            </div>
+                            </div>
+                            <button type="submit" class="btn btn-agenda btn-lg mt-4 w-100">Enviar agenda</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="agenda-viewer">
+                <div class="agenda-viewer-header">
+                    <div class="agenda-nav">
+                        <button type="button" id="agendaPrevMonth" class="agenda-nav-btn" aria-label="Mês anterior">&#8249;</button>
+                        <button type="button" id="agendaNextMonth" class="agenda-nav-btn" aria-label="Próximo mês">&#8250;</button>
+                    </div>
+                    <h3 id="agendaMonthLabel">&nbsp;</h3>
+                    <button type="button" id="agendaTodayBtn" class="agenda-today-btn">Hoje</button>
+                </div>
+                <div id="agendaList" class="agenda-list"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AVISO DE CONFIRMAÇÃO DA AGENDA (DESCE DO TOPO) -->
+    <div class="agenda-toast" id="agendaToast">
+        <div class="agenda-toast-icon">&#10003;</div>
+        <div class="agenda-toast-text">
+            <strong>Agenda enviada!</strong>
+            <span>Sua agenda foi enviada e será avaliada e confirmada pelo WhatsApp.</span>
+        </div>
+        <button type="button" class="agenda-toast-close" id="agendaToastClose" aria-label="Fechar aviso">&times;</button>
+    </div>
+
+    <!-- FOOTER: REDES SOCIAIS, CONTATO E FORMULÁRIO PARA WHATSAPP -->
+    <footer class="site-footer" id="contato">
+        <div class="footer-container">
+            <div class="footer-col footer-brand">
+                <h3>JBMUSIC</h3>
+                <p>Levando uma mensagem de fé através da música.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/samuelljb.oficial/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.07 1.2.06 2.2.27 3 .58a5.9 5.9 0 0 1 2.1 1.37 5.9 5.9 0 0 1 1.37 2.1c.31.8.52 1.8.58 3 .06 1.3.07 1.7.07 4.9s0 3.6-.07 4.9c-.06 1.2-.27 2.2-.58 3a5.9 5.9 0 0 1-1.37 2.1 5.9 5.9 0 0 1-2.1 1.37c-.8.31-1.8.52-3 .58-1.3.06-1.7.07-4.9.07s-3.6 0-4.9-.07c-1.2-.06-2.2-.27-3-.58a5.9 5.9 0 0 1-2.1-1.37 5.9 5.9 0 0 1-1.37-2.1c-.31-.8-.52-1.8-.58-3C2.2 15.6 2.2 15.2 2.2 12s0-3.6.07-4.9c.06-1.2.27-2.2.58-3a5.9 5.9 0 0 1 1.37-2.1A5.9 5.9 0 0 1 6.32 .63c.8-.31 1.8-.52 3-.58C10.4 2.2 10.8 2.2 12 2.2zm0 1.8c-3.14 0-3.5 0-4.75.07-1 .04-1.6.2-1.98.34-.5.2-.85.42-1.22.8-.38.37-.6.72-.8 1.22-.14.38-.3.98-.34 1.98C2.85 8.5 2.85 8.86 2.85 12s0 3.5.06 4.75c.05 1 .2 1.6.34 1.98.2.5.42.85.8 1.22.37.38.72.6 1.22.8.38.14.98.3 1.98.34 1.25.06 1.61.07 4.75.07s3.5 0 4.75-.07c1-.05 1.6-.2 1.98-.34.5-.2.85-.42 1.22-.8.38-.37.6-.72.8-1.22.14-.38.3-.98.34-1.98.06-1.25.07-1.61.07-4.75s0-3.5-.07-4.75c-.05-1-.2-1.6-.34-1.98-.2-.5-.42-.85-.8-1.22a3.3 3.3 0 0 0-1.22-.8c-.38-.14-.98-.3-1.98-.34C15.5 4 15.14 4 12 4zm0 3.6a4.4 4.4 0 1 1 0 8.8 4.4 4.4 0 0 1 0-8.8zm0 1.8a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2zm5.6-2a1.03 1.03 0 1 1-2.06 0 1.03 1.03 0 0 1 2.06 0z"/></svg>
+                    </a>
+                    <a href="https://www.youtube.com/@Samuel_JB" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="YouTube">
+                        <svg viewBox="0 0 24 24"><path d="M23.5 6.8a3 3 0 0 0-2.1-2.1C19.5 4.2 12 4.2 12 4.2s-7.5 0-9.4.5A3 3 0 0 0 .5 6.8 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.2 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.2zM9.6 15.5V8.5L15.8 12l-6.2 3.5z"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-col footer-contact">
+                <h4>Contato</h4>
+                <p>Ligue ou envie uma mensagem direta:</p>
+                <p class="phone-link"><a href="https://wa.me/5521990738646" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.4A10 10 0 1 0 12 2zm0 1.8a8.2 8.2 0 0 1 7 12.5l-.3.5.9 3.3-3.4-.9-.5.3A8.2 8.2 0 1 1 12 3.8zm-3.1 4a1 1 0 0 0-.7.3c-.3.3-1 1-1 2.3s1 2.7 1.1 2.9c.1.2 1.9 3 4.7 4.1 2.3.9 2.8.7 3.3.7.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.2-1.3-.1-.1-.3-.2-.6-.4-.3-.1-1.6-.8-1.8-.9-.3-.1-.4-.1-.6.1-.2.3-.6.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.5-.8-.7-1.4-1.6-1.6-1.9-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5z"/></svg>21 99073-8646</a></p>
+            </div>
+
+            <div class="footer-col footer-form">
+                <h4>Deixe uma mensagem</h4>
+                <form id="whatsappForm">
+                    <input type="text" id="formName" placeholder="Seu nome" required>
+                    <textarea id="formMessage" placeholder="Sua mensagem" rows="4" required></textarea>
+                    <button type="submit"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.4A10 10 0 1 0 12 2zm0 1.8a8.2 8.2 0 0 1 7 12.5l-.3.5.9 3.3-3.4-.9-.5.3A8.2 8.2 0 1 1 12 3.8zm-3.1 4a1 1 0 0 0-.7.3c-.3.3-1 1-1 2.3s1 2.7 1.1 2.9c.1.2 1.9 3 4.7 4.1 2.3.9 2.8.7 3.3.7.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.2-1.3-.1-.1-.3-.2-.6-.4-.3-.1-1.6-.8-1.8-.9-.3-.1-.4-.1-.6.1-.2.3-.6.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.5-.8-.7-1.4-1.6-1.6-1.9-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5z"/></svg>Enviar pelo WhatsApp</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 JBMusic. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT INTEGRADO -->
+    <script src="./script.js"></script>
+</body>
+</html>
