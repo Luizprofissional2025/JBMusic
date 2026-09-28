@@ -56,14 +56,7 @@
                                     <div class="invalid-feedback">Informe seu cargo.</div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="agendaIgreja" placeholder="Qual igreja" required >
-                                    <label for="agendaIgreja">Qual igreja</label>
-                                    <div class="invalid-feedback">Informe o nome da igreja.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <div class="form-floating">
                                     <input type="tel" class="form-control" id="agendaContato" placeholder="Contato (WhatsApp)" required inputmode="numeric" data-mask="phone" minlength="14" maxlength="15">
                                     <label for="agendaContato">Contato (WhatsApp)</label>
@@ -72,8 +65,22 @@
                             </div>
                             </div>
 
-                            <div class="form-group-title mt-4"><span>2</span> Evento</div>
+                            <div class="form-group-title mt-4"><span>2</span> Igreja e evento</div>
                             <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="agendaIgreja" placeholder="Qual igreja" required >
+                                    <label for="agendaIgreja">Qual igreja</label>
+                                    <div class="invalid-feedback">Informe o nome da igreja.</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="agendaEndereco" placeholder="Endereço da igreja" required autocomplete="street-address">
+                                    <label for="agendaEndereco">Endereço da igreja</label>
+                                    <div class="invalid-feedback">Informe o endereço da igreja.</div>
+                                </div>
+                            </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input type="date" class="form-control" id="agendaData" placeholder="Dia do evento" required >
