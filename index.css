@@ -766,6 +766,10 @@
             font-size: 14px;
         }
 
+        .site-form .form-floating > .form-control::placeholder {
+            color: transparent;
+        }
+
         .site-form .form-floating > label::after {
             background: transparent !important;
         }
@@ -1033,15 +1037,47 @@
             text-transform: capitalize;
         }
 
+        /* LINHAS DA AGENDA ALINHADAS EM COLUNAS: Igreja | Endereço | Horário | Responsável | Contato */
+        .agenda-cols-head,
         .agenda-event-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.5fr) 64px minmax(0, 1.1fr) 132px;
+            column-gap: 16px;
             align-items: baseline;
-            gap: 14px;
             padding: 12px 24px;
+        }
+
+        .agenda-cols-head {
+            padding-top: 14px;
+            padding-bottom: 10px;
+            color: #766f65;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .agenda-events .agenda-event-row:nth-child(even) {
             background: rgba(255, 255, 255, 0.025);
+        }
+
+        .agenda-cell {
+            min-width: 0;
+            font-size: 12.5px;
+            color: #9a948b;
+            overflow-wrap: anywhere;
+        }
+
+        .agenda-cell-igreja {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .agenda-dot {
@@ -1053,49 +1089,31 @@
             align-self: center;
         }
 
-        .agenda-event-main {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-            overflow: hidden;
-        }
-
-        .agenda-event-church {
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .agenda-event-cargo {
-            flex-shrink: 0;
-            color: #c9b8ff;
-            font-size: 12px;
-            white-space: nowrap;
-        }
-
-        .agenda-event-cargo:not(:empty)::before {
-            content: '· ';
-        }
-
-        .agenda-event-side {
-            flex-shrink: 0;
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-            color: #9a948b;
-            font-size: 12.5px;
-        }
-
-        .agenda-event-time {
+        .agenda-cell-horario {
             color: #D89C48;
             font-weight: 700;
+            font-size: 13px;
+        }
+
+        .agenda-cell-nome strong {
+            display: block;
+            color: #e7e3db;
+            font-weight: 600;
+        }
+
+        .agenda-cell-nome small {
+            display: block;
+            color: #c9b8ff;
+            font-size: 11.5px;
+        }
+
+        .agenda-cell-contato a {
+            color: #9a948b;
+            text-decoration: none;
+        }
+
+        .agenda-cell-contato a:hover {
+            color: #25D366;
         }
 
         .agenda-empty {
@@ -1602,17 +1620,27 @@
                 transform: none;
             }
 
+            .agenda-cols-head {
+                display: none;
+            }
+
             .agenda-event-row {
-                flex-wrap: wrap;
+                grid-template-columns: 1fr;
+                row-gap: 4px;
+                padding: 14px 20px;
             }
 
-            .agenda-event-main {
-                flex-wrap: wrap;
+            .agenda-cell[data-label]:not(.agenda-cell-igreja)::before {
+                content: attr(data-label) ': ';
+                color: #766f65;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
 
-            .agenda-event-side {
-                width: 100%;
-                padding-left: 20px;
+            .agenda-cell-nome strong,
+            .agenda-cell-nome small {
+                display: inline;
             }
 
             .agenda-toast {
