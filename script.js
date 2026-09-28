@@ -94,7 +94,7 @@
 
                     if (!name || !message) return;
 
-                    const text = `Olá, meu nome é ${name}.\n\n${message}`;
+                    const text = `💬 *NOVA MENSAGEM*\n${jbOrigin('Formulário do rodapé - ' + document.title.replace('JBMUSIC - ', ''))}\n\n👤 *Nome:* ${name}\n\n${message}`;
                     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 
                     window.open(whatsappUrl, '_blank');
@@ -119,19 +119,22 @@
                     const email = document.getElementById('tcEmail').value.trim();
                     const endereco = document.getElementById('tcEndereco').value.trim();
                     const igreja = document.getElementById('tcIgreja').value.trim();
+                    const enderecoIgreja = document.getElementById('tcEnderecoIgreja').value.trim();
                     const mensagem = document.getElementById('tcMensagem').value.trim();
 
                     if (!nome || !contato) return;
 
                     const text =
-                        `Olá! Quero fazer parte do movimento JBMusic.\n\n` +
-                        `Nome: ${nome}\n` +
-                        `Contato: ${contato}\n` +
-                        `Idade: ${idade}\n` +
-                        `E-mail: ${email}\n` +
-                        `Endereço: ${endereco}\n` +
-                        `Igreja: ${igreja}\n\n` +
-                        `Sobre mim: ${mensagem}`;
+                        `🎤 *NOVA INSCRIÇÃO - TRABALHE CONOSCO*\n` +
+                        `${jbOrigin('Trabalhe conosco')}\n\n` +
+                        `👤 *Nome:* ${nome}\n` +
+                        `📞 *Contato:* ${contato}\n` +
+                        `🎂 *Idade:* ${idade}\n` +
+                        `✉️ *E-mail:* ${email}\n` +
+                        `🏠 *Endereço:* ${endereco}\n` +
+                        `⛪ *Igreja:* ${igreja}\n` +
+                        `📌 *Endereço da igreja:* ${enderecoIgreja}\n\n` +
+                        `💬 *Sobre mim:* ${mensagem}`;
 
                     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 
@@ -221,17 +224,17 @@
 
                     let eventosHtml = '';
                     grupos[dataStr].forEach(a => {
+                        const tel = (a.contato || '').replace(/\D/g, '');
+                        const contatoHtml = tel
+                            ? `<a href="https://wa.me/55${tel}" target="_blank" rel="noopener noreferrer">${escapeHtml(a.contato)}</a>`
+                            : '—';
                         eventosHtml += `
                             <div class="agenda-event-row">
-                                <span class="agenda-dot"></span>
-                                <div class="agenda-event-main">
-                                    <span class="agenda-event-church">${escapeHtml(a.igreja)}</span>
-                                    <span class="agenda-event-cargo">${escapeHtml(a.cargo)}</span>
-                                </div>
-                                <div class="agenda-event-side">
-                                    <span class="agenda-event-time">${escapeHtml(a.horario)}</span>
-                                    <span class="agenda-event-name">${escapeHtml(a.nome)}</span>
-                                </div>
+                                <div class="agenda-cell agenda-cell-igreja"><span class="agenda-dot"></span><span>${escapeHtml(a.igreja)}</span></div>
+                                <div class="agenda-cell" data-label="Endereço">${escapeHtml(a.endereco) || '—'}</div>
+                                <div class="agenda-cell agenda-cell-horario" data-label="Horário">${escapeHtml(a.horario)}</div>
+                                <div class="agenda-cell agenda-cell-nome" data-label="Responsável"><strong>${escapeHtml(a.nome)}</strong> <small>${escapeHtml(a.cargo)}</small></div>
+                                <div class="agenda-cell agenda-cell-contato" data-label="Contato">${contatoHtml}</div>
                             </div>`;
                     });
 
@@ -245,7 +248,11 @@
                         </div>`;
                 });
 
-                agendaList.innerHTML = html;
+                const cabecalho = `
+                    <div class="agenda-cols-head">
+                        <span>Igreja</span><span>Endereço</span><span>Horário</span><span>Responsável</span><span>Contato</span>
+                    </div>`;
+                agendaList.innerHTML = cabecalho + html;
             }
 
             function showAgendaToast() {
@@ -295,6 +302,7 @@
                         nome: document.getElementById('agendaNome').value.trim(),
                         cargo: document.getElementById('agendaCargo').value.trim(),
                         igreja: document.getElementById('agendaIgreja').value.trim(),
+                        endereco: document.getElementById('agendaEndereco').value.trim(),
                         contato: document.getElementById('agendaContato').value.trim(),
                         data: document.getElementById('agendaData').value,
                         horario: document.getElementById('agendaHorario').value
@@ -313,6 +321,19 @@
                     if (agendaToast) {
                         showAgendaToast();
                     }
+
+                    const [ay, am, ad] = agenda.data.split('-').map(Number);
+                    const diaSemana = DIAS_SEMANA[new Date(ay, am - 1, ad).getDay()];
+                    const textoAgenda =
+                        `📅 *NOVA SOLICITAÇÃO DE AGENDA*\n` +
+                        `${jbOrigin('Agenda')}\n\n` +
+                        `⛪ *Igreja:* ${agenda.igreja}\n` +
+                        `📌 *Endereço:* ${agenda.endereco}\n` +
+                        `📆 *Dia:* ${String(ad).padStart(2, '0')}/${String(am).padStart(2, '0')}/${ay} (${diaSemana})\n` +
+                        `🕒 *Horário:* ${agenda.horario}\n` +
+                        `👤 *Responsável:* ${agenda.nome} (${agenda.cargo})\n` +
+                        `📞 *Contato:* ${agenda.contato}`;
+                    window.open(`https://wa.me/5521990738646?text=${encodeURIComponent(textoAgenda)}`, '_blank');
                 });
             }
 
@@ -388,3 +409,10 @@
                 agendaData.min = `${hoje.getFullYear()}-${mm}-${dd}`;
             }
         });
+
+
+        /* Identifica de qual página/formulário do site a mensagem saiu (aparece no WhatsApp) */
+        function jbOrigin(secao) {
+            const url = location.href.split(/[?#]/)[0];
+            return `📍 *Origem:* Site JBMusic › ${secao}\n🔗 ${url}`;
+        }
