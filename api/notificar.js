@@ -7,6 +7,8 @@
  *   WHATSAPP_DESTINO   (opcional) número que recebe, com 55 + DDD. Padrão: 5521977041825
  */
 
+const https = require('https');
+
 const DESTINO = (process.env.WHATSAPP_DESTINO || '5521977041825').replace(/\D/g, '');
 const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -73,6 +75,18 @@ function montarMensagem(b, referer) {
     return null;
 }
 
+function chamarCallMeBot(url) {
+    return new Promise((resolve, reject) => {
+        const req = https.get(url, { timeout: 10000 }, (resp) => {
+            let corpo = '';
+            resp.on('data', (chunk) => { corpo += chunk; });
+            resp.on('end', () => resolve({ status: resp.statusCode, corpo }));
+        });
+        req.on('timeout', () => req.destroy(new Error('Tempo esgotado ao contatar o CallMeBot.')));
+        req.on('error', reject);
+    });
+}
+
 module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
@@ -114,11 +128,10 @@ module.exports = async function handler(req, res) {
         const url =
             `https://api.callmebot.com/whatsapp.php?phone=${DESTINO}` +
             `&text=${encodeURIComponent(mensagem)}&apikey=${encodeURIComponent(apikey)}`;
-        const resposta = await fetch(url);
-        const corpo = await resposta.text();
+        const { status, corpo } = await chamarCallMeBot(url);
 
-        if (!resposta.ok || /error|invalid|not authorized/i.test(corpo)) {
-            console.error('Falha CallMeBot:', resposta.status, corpo.slice(0, 200));
+        if (status < 200 || status >= 300 || /error|invalid|not authorized/i.test(corpo)) {
+            console.error('Falha CallMeBot:', status, corpo.slice(0, 200));
             return res.status(502).json({ ok: false, erro: 'Não foi possível enviar agora.' });
         }
 
