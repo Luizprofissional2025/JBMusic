@@ -40,6 +40,7 @@
                             <p>Informe os dados do responsável e do evento. Confirmamos pelo WhatsApp.</p>
                         </div>
                         <form id="agendaForm" class="site-form needs-validation" novalidate>
+                            <input type="text" name="website" class="jb-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
                             <div class="form-group-title"><span>1</span> Responsável</div>
                             <div class="row g-3">
                             <div class="col-md-6">
@@ -115,16 +116,6 @@
             </div>
         </div>
     </section>
-
-    <!-- AVISO DE CONFIRMAÇÃO DA AGENDA (DESCE DO TOPO) -->
-    <div class="agenda-toast" id="agendaToast">
-        <div class="agenda-toast-icon">&#10003;</div>
-        <div class="agenda-toast-text">
-            <strong>Agenda enviada!</strong>
-            <span>Sua agenda foi enviada e será avaliada e confirmada pelo WhatsApp.</span>
-        </div>
-        <button type="button" class="agenda-toast-close" id="agendaToastClose" aria-label="Fechar aviso">&times;</button>
-    </div>
 
     <!-- FOOTER: REDES SOCIAIS, CONTATO E FORMULÁRIO PARA WHATSAPP -->
     <footer class="site-footer" id="contato">
