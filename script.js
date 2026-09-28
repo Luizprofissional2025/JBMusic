@@ -1,4 +1,8 @@
-/* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
+/* Número que recebe os avisos de AGENDA e TRABALHE CONOSCO (55 + DDD 21 + 977041825).
+           Para trocar o destino, altere apenas esta linha. */
+        const JB_WHATSAPP_AVISOS = '5521977041825';
+
+        /* --- SCRIPT 1: TRANSIÇÃO AO ROLAR DE TELA (INTERSECTION OBSERVER) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const videoSection = document.querySelector('.video-gallery-section');
             if (!videoSection) return;
@@ -106,7 +110,7 @@
         /* --- SCRIPT 5: FORMULÁRIO "TRABALHE CONOSCO" -> WHATSAPP --- */
         document.addEventListener('DOMContentLoaded', () => {
             const tcForm = document.getElementById('trabalheForm');
-            const WHATSAPP_NUMBER = '5521990738646';
+            const WHATSAPP_NUMBER = JB_WHATSAPP_AVISOS;
 
             if (tcForm) {
                 tcForm.addEventListener('submit', (e) => {
@@ -333,7 +337,7 @@
                         `🕒 *Horário:* ${agenda.horario}\n` +
                         `👤 *Responsável:* ${agenda.nome} (${agenda.cargo})\n` +
                         `📞 *Contato:* ${agenda.contato}`;
-                    window.open(`https://wa.me/5521990738646?text=${encodeURIComponent(textoAgenda)}`, '_blank');
+                    window.open(`https://wa.me/${JB_WHATSAPP_AVISOS}?text=${encodeURIComponent(textoAgenda)}`, '_blank');
                 });
             }
 
