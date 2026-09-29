@@ -80,25 +80,31 @@
             });
         });
 
-        /* --- SCRIPT 4: FORMULÁRIO DE CONTATO -> WHATSAPP --- */
+        /* --- SCRIPT 4: FORMULÁRIO "DEIXE UMA MENSAGEM" (AVISO AUTOMÁTICO NO WHATSAPP DO MÚSICO) --- */
         document.addEventListener('DOMContentLoaded', () => {
             const whatsappForm = document.getElementById('whatsappForm');
-            const WHATSAPP_NUMBER = '5521990738646'; // 55 + DDD 21 + número
 
             if (whatsappForm) {
-                whatsappForm.addEventListener('submit', (e) => {
+                whatsappForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
 
-                    const name = document.getElementById('formName').value.trim();
-                    const message = document.getElementById('formMessage').value.trim();
+                    const nome = document.getElementById('formName').value.trim();
+                    const mensagem = document.getElementById('formMessage').value.trim();
+                    if (!nome || !mensagem) return;
 
-                    if (!name || !message) return;
+                    const btn = whatsappForm.querySelector('button[type="submit"]');
+                    const payload = { tipo: 'contato', nome, mensagem, website: jbIsca(whatsappForm) };
 
-                    const text = `💬 *NOVA MENSAGEM*\n${jbOrigin('Formulário do rodapé - ' + document.title.replace('JBMUSIC - ', ''))}\n\n👤 *Nome:* ${name}\n\n${message}`;
-                    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+                    jbSetLoading(btn, true);
+                    const ok = await jbEnviar(payload);
+                    jbSetLoading(btn, false);
 
-                    window.open(whatsappUrl, '_blank');
-                    whatsappForm.reset();
+                    if (ok) {
+                        whatsappForm.reset();
+                        jbToast('Mensagem enviada!', 'Recebemos sua mensagem e retornaremos em breve.');
+                    } else {
+                        jbToast('Não foi possível enviar', 'Tente novamente em instantes.', 'erro');
+                    }
                 });
             }
         });
@@ -428,10 +434,3 @@
                 agendaData.min = `${hoje.getFullYear()}-${mm}-${dd}`;
             }
         });
-
-
-        /* Identifica de qual página/formulário do site a mensagem saiu (aparece no WhatsApp) */
-        function jbOrigin(secao) {
-            const url = location.href.split(/[?#]/)[0];
-            return `📍 *Origem:* Site JBMusic › ${secao}\n🔗 ${url}`;
-        }
