@@ -72,6 +72,16 @@ function montarMensagem(b, referer) {
         );
     }
 
+    if (b.tipo === 'contato') {
+        if (!linha(b.nome) || !texto(b.mensagem, 800)) return null;
+        return (
+            `💬 *NOVA MENSAGEM DO SITE*\n` +
+            `${origem('Formulário "Deixe uma mensagem"', b.origem, referer)}\n\n` +
+            `👤 *Nome:* ${linha(b.nome)}\n\n` +
+            `${texto(b.mensagem, 800)}`
+        );
+    }
+
     return null;
 }
 
@@ -129,6 +139,11 @@ module.exports = async function handler(req, res) {
             `https://api.callmebot.com/whatsapp.php?phone=${DESTINO}` +
             `&text=${encodeURIComponent(mensagem)}&apikey=${encodeURIComponent(apikey)}`;
         const { status, corpo } = await chamarCallMeBot(url);
+
+        // Registrado sempre: se o CallMeBot/WhatsApp falhar silenciosamente, os dados
+        // enviados pela pessoa ainda ficam recuperáveis aqui (Vercel > Logs).
+        console.log('[notificar] tipo:', body.tipo, '| status CallMeBot:', status, '| resposta:', corpo.slice(0, 300));
+        console.log('[notificar] mensagem completa:\n' + mensagem);
 
         if (status < 200 || status >= 300 || /error|invalid|not authorized/i.test(corpo)) {
             console.error('Falha CallMeBot:', status, corpo.slice(0, 200));
