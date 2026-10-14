@@ -147,9 +147,8 @@
             }
         });
 
-        /* --- SCRIPT 6: AGENDA (SALVA NO LOCALSTORAGE E LISTA POR MÊS) --- */
+        /* --- SCRIPT 6: AGENDA (ENVIO + LISTA PÚBLICA DAS AGENDAS VALIDADAS PELO ADMINISTRADOR) --- */
         document.addEventListener('DOMContentLoaded', () => {
-            const AGENDA_KEY = 'jbmusic_agendas';
             const MESES = [
                 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -171,19 +170,26 @@
             let viewDate = new Date();
             viewDate.setDate(1);
 
+            // Agendas validadas pelo administrador (vêm do servidor)
+            let agendasValidadas = [];
+            let estadoCarga = 'carregando'; // carregando | ok | erro
+
             function getAgendas() {
-                try {
-                    const data = JSON.parse(localStorage.getItem(AGENDA_KEY));
-                    return Array.isArray(data) ? data : [];
-                } catch (err) {
-                    return [];
-                }
+                return agendasValidadas;
             }
 
-            function saveAgenda(agenda) {
-                const agendas = getAgendas();
-                agendas.push(agenda);
-                localStorage.setItem(AGENDA_KEY, JSON.stringify(agendas));
+            async function carregarAgendas() {
+                try {
+                    const resposta = await fetch('/api/agendas', { cache: 'no-store' });
+                    const dados = await resposta.json();
+                    if (!resposta.ok || !dados.ok) throw new Error('falha');
+                    agendasValidadas = Array.isArray(dados.agendas) ? dados.agendas : [];
+                    estadoCarga = 'ok';
+                } catch (err) {
+                    agendasValidadas = [];
+                    estadoCarga = 'erro';
+                }
+                renderAgendaList();
             }
 
             function escapeHtml(str) {
@@ -197,6 +203,15 @@
                 const mes = viewDate.getMonth(); // 0-11
 
                 agendaMonthLabel.textContent = `${MESES[mes]} de ${ano}`;
+
+                if (estadoCarga === 'carregando') {
+                    agendaList.innerHTML = '<div class="agenda-empty">Carregando agenda...</div>';
+                    return;
+                }
+                if (estadoCarga === 'erro') {
+                    agendaList.innerHTML = '<div class="agenda-empty">Não foi possível carregar a agenda agora. Tente novamente em instantes.</div>';
+                    return;
+                }
 
                 const doMes = getAgendas()
                     .filter(a => {
@@ -226,9 +241,11 @@
                     let eventosHtml = '';
                     grupos[dataStr].forEach(a => {
                         const tel = (a.contato || '').replace(/\D/g, '');
-                        const contatoHtml = tel
-                            ? `<a href="https://wa.me/55${tel}" target="_blank" rel="noopener noreferrer">${escapeHtml(a.contato)}</a>`
-                            : '—';
+                        const contatoHtml = a.contatoOculto
+                            ? escapeHtml(a.contato) || '—'
+                            : (tel
+                                ? `<a href="https://wa.me/55${tel}" target="_blank" rel="noopener noreferrer">${escapeHtml(a.contato)}</a>`
+                                : '—');
                         eventosHtml += `
                             <div class="agenda-event-row">
                                 <div class="agenda-cell agenda-cell-igreja"><span class="agenda-dot"></span><span>${escapeHtml(a.igreja)}</span></div>
@@ -305,18 +322,14 @@
                         return;
                     }
 
-                    saveAgenda(agenda);
-
-                    const [y, m] = agenda.data.split('-').map(Number);
-                    viewDate = new Date(y, m - 1, 1);
-                    renderAgendaList();
-
                     jbSubmitted(agendaForm);
                     jbToast('Agenda enviada!', 'Sua agenda foi enviada e será avaliada e confirmada pelo WhatsApp.');
                 });
             }
 
             renderAgendaList();
+            carregarAgendas();
+            window.jbRecarregarAgenda = carregarAgendas;
         });
 
         /* --- SCRIPT 7: CARDS DE PROJETOS EXPANSÍVEIS AO CLICAR --- */
@@ -360,10 +373,6 @@
 
         /* Envia os dados para a função /api/notificar, que avisa o músico no WhatsApp. */
         async function jbEnviar(payload) {
-            if (window.JB_PREVIEW) {
-                await new Promise(r => setTimeout(r, 700));
-                return true;
-            }
             try {
                 const resposta = await fetch('/api/notificar', {
                     method: 'POST',
