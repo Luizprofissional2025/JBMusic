@@ -13,6 +13,23 @@
 const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
+const net = require('net');
+const tls = require('tls');
+
+// Lê uma variável de ambiente pelo nome original ou por um nome alternativo
+// (o navegador pode traduzir os nomes na tela da Vercel, ex.: SENHA_DE_ADMINISTRADOR).
+const env = (...nomes) => {
+    for (const n of nomes) if (process.env[n]) return process.env[n];
+    return '';
+};
+const ENV_NOMES = {
+    senha: ['ADMIN_PASSWORD', 'SENHA_DE_ADMINISTRADOR'],
+    segredo: ['ADMIN_SECRET'],
+    callmebot: ['CALLMEBOT_APIKEY', 'CHAVE_API_CALLMEBOT'],
+    contatoPublico: ['AGENDA_CONTATO_PUBLICO'],
+    destino: ['WHATSAPP_DESTINO']
+};
+const conf = (chave) => env(...ENV_NOMES[chave]);
 
 /* ------------------------- sanitização ------------------------- */
 const linha = (v, max = 160) =>
@@ -50,16 +67,132 @@ const ipDe = (req) =>
 
 /* ------------------------- Redis (REST) ------------------------- */
 function redisConfig() {
-    const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-    return url && token ? { url: url.replace(/\/+$/, ''), token } : null;
+    const e = process.env;
+    let url = e.KV_REST_API_URL || e.UPSTASH_REDIS_REST_URL;
+    let token = e.KV_REST_API_TOKEN || e.UPSTASH_REDIS_REST_TOKEN;
+
+    // A Vercel permite escolher um prefixo para as variáveis (ex.: STORAGE_KV_REST_API_URL).
+    if (!url || !token) {
+        for (const nome of Object.keys(e)) {
+            const m = nome.match(/^(.*?)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
+            if (!m) continue;
+            const par = m[1] + m[2].replace('URL', 'TOKEN');
+            if (e[nome] && e[par]) { url = e[nome]; token = e[par]; break; }
+        }
+    }
+    if (url && token) return { modo: 'rest', url: url.replace(/\/+$/, ''), token };
+
+    // Conexão direta (protocolo Redis) pela variável REDIS_URL criada pela integração da Vercel
+    let tcp = e.REDIS_URL || e.URL_REDIS || e.KV_URL;
+    if (!tcp) {
+        for (const nome of Object.keys(e)) {
+            if (/(^|_)(REDIS_URL|KV_URL)$/.test(nome) && /^rediss?:\/\//.test(e[nome])) { tcp = e[nome]; break; }
+        }
+    }
+    return tcp && /^rediss?:\/\//.test(tcp) ? { modo: 'tcp', url: tcp } : null;
 }
 
 const redisAtivo = () => !!redisConfig();
+const redisModo = () => (redisConfig() || {}).modo || null;
+
+/* ---- cliente mínimo do protocolo Redis (RESP2), sem dependências ---- */
+function codificar(comando) {
+    const partes = comando.map(String);
+    let out = `*${partes.length}\r\n`;
+    for (const p of partes) out += `$${Buffer.byteLength(p)}\r\n${p}\r\n`;
+    return out;
+}
+
+function lerResp(buf, i) {
+    if (i >= buf.length) return null;
+    const tipo = String.fromCharCode(buf[i]);
+    const fim = buf.indexOf('\r\n', i);
+    if (fim === -1) return null;
+    const linhaTxt = buf.toString('utf8', i + 1, fim);
+    const prox = fim + 2;
+    switch (tipo) {
+        case '+': return [linhaTxt, prox];
+        case '-': return [new Error(linhaTxt), prox];
+        case ':': return [Number(linhaTxt), prox];
+        case '$': {
+            const n = Number(linhaTxt);
+            if (n < 0) return [null, prox];
+            if (buf.length < prox + n + 2) return null;
+            return [buf.toString('utf8', prox, prox + n), prox + n + 2];
+        }
+        case '*': {
+            const n = Number(linhaTxt);
+            if (n < 0) return [null, prox];
+            const itens = [];
+            let pos = prox;
+            for (let k = 0; k < n; k++) {
+                const r = lerResp(buf, pos);
+                if (!r) return null;
+                itens.push(r[0]);
+                pos = r[1];
+            }
+            return [itens, pos];
+        }
+        default: throw new Error('Resposta inesperada do banco de dados.');
+    }
+}
+
+function redisTcp(urlTexto, comando) {
+    return new Promise((resolve, reject) => {
+        const u = new URL(urlTexto);
+        const opcoes = { host: u.hostname, port: Number(u.port) || 6379 };
+        const sock = u.protocol === 'rediss:'
+            ? tls.connect({ ...opcoes, servername: u.hostname })
+            : net.connect(opcoes);
+
+        const usuario = decodeURIComponent(u.username || '');
+        const senha = decodeURIComponent(u.password || '');
+        const lote = [];
+        if (senha) lote.push(usuario ? ['AUTH', usuario, senha] : ['AUTH', senha]);
+        lote.push(comando);
+
+        let buf = Buffer.alloc(0);
+        const respostas = [];
+        let terminou = false;
+        const concluir = (erro, valor) => {
+            if (terminou) return;
+            terminou = true;
+            sock.destroy();
+            erro ? reject(erro) : resolve(valor);
+        };
+
+        sock.setTimeout(8000, () => concluir(new Error('Tempo esgotado no banco de dados.')));
+        sock.on('error', concluir);
+        sock.on('close', () => concluir(new Error('Conexão com o banco encerrada.')));
+        sock.on(u.protocol === 'rediss:' ? 'secureConnect' : 'connect', () => {
+            sock.write(lote.map(codificar).join(''));
+        });
+        sock.on('data', (pedaco) => {
+            buf = Buffer.concat([buf, pedaco]);
+            try {
+                let pos = 0;
+                while (respostas.length < lote.length) {
+                    const r = lerResp(buf, pos);
+                    if (!r) break;
+                    respostas.push(r[0]);
+                    pos = r[1];
+                }
+                buf = buf.subarray(pos);
+            } catch (err) {
+                return concluir(err);
+            }
+            if (respostas.length === lote.length) {
+                const erro = respostas.find((r) => r instanceof Error);
+                concluir(erro || null, respostas[respostas.length - 1]);
+            }
+        });
+    });
+}
 
 function redis(comando) {
     const cfg = redisConfig();
     if (!cfg) return Promise.reject(new Error('Banco de dados não configurado.'));
+    if (cfg.modo === 'tcp') return redisTcp(cfg.url, comando);
 
     return new Promise((resolve, reject) => {
         const u = new URL(cfg.url);
@@ -185,11 +318,11 @@ const SESSAO_MS = 8 * 60 * 60 * 1000;
 
 const chaveSessao = () =>
     crypto.createHash('sha256')
-        .update('jbmusic-admin:' + (process.env.ADMIN_SECRET || process.env.ADMIN_PASSWORD || ''))
+        .update('jbmusic-admin:' + (conf('segredo') || conf('senha') || ''))
         .digest();
 
 function senhaCorreta(informada) {
-    const senha = process.env.ADMIN_PASSWORD;
+    const senha = conf('senha');
     if (!senha) return false;
     const a = crypto.createHash('sha256').update(String(informada ?? '')).digest();
     const b = crypto.createHash('sha256').update(senha).digest();
@@ -230,6 +363,6 @@ function mascararContato(c) {
 
 module.exports = {
     linha, texto, origemPermitida, lerCorpo, ipDe,
-    redis, redisAtivo, COLECOES, novoRegistro, salvar, listar, obter, remover,
+    conf, redis, redisAtivo, redisModo, COLECOES, novoRegistro, salvar, listar, obter, remover,
     validarAgenda, limitar, senhaCorreta, gerarToken, tokenValido, tokenDe, mascararContato
 };
