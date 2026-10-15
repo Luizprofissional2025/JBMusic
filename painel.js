@@ -13,8 +13,6 @@
     const novaForm = document.getElementById('admNovaForm');
     const novaBox = document.getElementById('admNovaAgenda');
 
-    const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-
     const COLECOES = {
         agendas: {
             vazio: 'Nenhuma agenda neste filtro.',
@@ -47,13 +45,6 @@
         const div = document.createElement('div');
         div.textContent = valor == null ? '' : String(valor);
         return div.innerHTML;
-    }
-
-    function dataBR(iso) {
-        const [y, m, d] = String(iso || '').split('-').map(Number);
-        if (!y) return '—';
-        const dia = DIAS[new Date(y, m - 1, d).getDay()];
-        return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y} · ${dia}`;
     }
 
     function dataHora(iso) {
@@ -148,85 +139,117 @@
     });
 
     /* ---------------- desenho ---------------- */
+    const DIAS_CURTO = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const LIXEIRA = '<svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9z"/></svg>';
+
+    function dataCurta(iso) {
+        const [y, m, d] = String(iso || '').split('-').map(Number);
+        if (!y) return { dm: '—', sem: '' };
+        const anoAtual = new Date().getFullYear();
+        const dm = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}${y !== anoAtual ? '/' + String(y).slice(2) : ''}`;
+        return { dm, sem: DIAS_CURTO[new Date(y, m - 1, d).getDay()] };
+    }
+
     function passaFiltro(colecao, item) {
         const f = filtro[colecao];
         return f === 'todas' || item.status === f;
     }
 
-    function campo(rotulo, valorHtml, largo) {
-        return `<div class="adm-campo${largo ? ' adm-campo-largo' : ''}"><span>${rotulo}</span><strong>${valorHtml}</strong></div>`;
-    }
-
-    function camposDe(colecao, i) {
-        if (colecao === 'agendas') {
-            return campo('Igreja', esc(i.igreja)) +
-                campo('Endereço', esc(i.endereco)) +
-                campo('Dia do evento', dataBR(i.data)) +
-                campo('Horário', esc(i.horario)) +
-                campo('Responsável', `${esc(i.nome)} <small>${esc(i.cargo)}</small>`) +
-                campo('Contato', linkZap(i.contato));
-        }
-        if (colecao === 'inscricoes') {
-            return campo('Nome', esc(i.nome)) +
-                campo('Contato', linkZap(i.contato)) +
-                campo('Idade', esc(i.idade)) +
-                campo('E-mail', esc(i.email)) +
-                campo('Endereço', esc(i.endereco)) +
-                campo('Igreja', esc(i.igreja)) +
-                campo('Endereço da igreja', esc(i.enderecoIgreja)) +
-                campo('Sobre a pessoa', esc(i.mensagem), true);
-        }
-        return campo('Nome', esc(i.nome)) + campo('Mensagem', esc(i.mensagem), true);
+    function selo(status) {
+        return `<span class="adm-status st-${esc(status)}">${ROTULO_STATUS[status] || esc(status)}</span>`;
     }
 
     function acoesDe(colecao, i) {
-        const botao = (acao, texto, classe) =>
-            `<button type="button" class="adm-btn ${classe}" data-acao="${acao}" data-colecao="${colecao}" data-id="${esc(i.id)}">${texto}</button>`;
-        let html = '';
+        const botao = (acao, texto, classe, titulo) =>
+            `<button type="button" class="adm-btn ${classe}" data-acao="${acao}" data-colecao="${colecao}" data-id="${esc(i.id)}"${titulo ? ` title="${titulo}" aria-label="${titulo}"` : ''}>${texto}</button>`;
+        let html = selo(i.status);
         if (colecao === 'mensagens') {
             html += i.status === 'nova' ? botao('lida', 'Marcar como lida', 'adm-btn-ok') : botao('nova', 'Marcar como nova', 'adm-btn-neutro');
         } else {
             if (i.status !== 'validada') html += botao('validada', '✓ Validar', 'adm-btn-ok');
             if (i.status !== 'recusada') html += botao('recusada', '✕ Não validar', 'adm-btn-nao');
         }
-        return html + botao('excluir', 'Excluir', 'adm-btn-excluir');
+        return html + botao('excluir', LIXEIRA, 'adm-btn-excluir', 'Excluir');
     }
 
-    function avisoConflito(i) {
+    function conflito(i) {
         if (i.status === 'validada') return '';
         const outra = dados.agendas.find((a) => a.id !== i.id && a.status === 'validada' && a.data === i.data);
         return outra
-            ? `<div class="adm-alerta">⚠ Já existe uma agenda validada neste dia: ${esc(outra.igreja)} às ${esc(outra.horario)}.</div>`
+            ? `<span class="adm-conf" title="Já existe uma agenda validada neste dia: ${esc(outra.igreja)} às ${esc(outra.horario)}">⚠ mesmo dia</span>`
             : '';
     }
 
+    const origemTxt = (i) => `${i.origem === 'painel' ? 'Adicionada no painel' : 'Recebida'} ${dataHora(i.criadoEm)}`;
+    const detalhe = (rotulo, valor, largo) => `<div${largo ? ' class="adm-det-largo"' : ''}><span>${rotulo}</span><p>${valor}</p></div>`;
+
     function cartao(colecao, i) {
-        const origem = i.origem === 'painel' ? 'Adicionada pelo painel' : 'Recebida pelo site';
+        if (colecao === 'agendas') {
+            const d = dataCurta(i.data);
+            return `
+            <article class="adm-item st-${esc(i.status)}">
+                <div class="adm-row ag">
+                    <div class="adm-c adm-c-data"><b>${d.dm}</b><small>${d.sem} · ${esc(i.horario)}</small></div>
+                    <div class="adm-c"><strong title="${esc(i.igreja)}">${esc(i.igreja)}${conflito(i)}</strong><span class="adm-sub" title="${esc(i.endereco)}">${esc(i.endereco)}</span></div>
+                    <div class="adm-c"><strong>${esc(i.nome)}</strong><span class="adm-sub">${esc(i.cargo)}</span></div>
+                    <div class="adm-c"><span class="adm-ct">${linkZap(i.contato)}</span><span class="adm-sub">${origemTxt(i)}</span></div>
+                    <div class="adm-c adm-c-acoes">${acoesDe(colecao, i)}</div>
+                </div>
+            </article>`;
+        }
+        if (colecao === 'inscricoes') {
+            return `
+            <article class="adm-item st-${esc(i.status)}">
+                <div class="adm-row in">
+                    <div class="adm-c"><strong>${esc(i.nome)}</strong><span class="adm-sub">${esc(i.idade)} anos · ${origemTxt(i)}</span></div>
+                    <div class="adm-c"><span class="adm-ct">${linkZap(i.contato)}</span><span class="adm-sub">${esc(i.email)}</span></div>
+                    <div class="adm-c"><strong>${esc(i.igreja)}</strong><span class="adm-sub">${esc(i.enderecoIgreja)}</span></div>
+                    <div class="adm-c adm-c-acoes">${acoesDe(colecao, i)}</div>
+                </div>
+                <details class="adm-det"><summary>Ver detalhes</summary>
+                    <div class="adm-det-corpo">
+                        ${detalhe('Endereço', esc(i.endereco))}${detalhe('E-mail', esc(i.email))}${detalhe('Endereço da igreja', esc(i.enderecoIgreja))}
+                        ${detalhe('Sobre a pessoa', esc(i.mensagem), true)}
+                    </div>
+                </details>
+            </article>`;
+        }
         return `
-            <article class="adm-item">
-                <header class="adm-item-topo">
-                    <span class="adm-status st-${esc(i.status)}">${ROTULO_STATUS[i.status] || esc(i.status)}</span>
-                    <span class="adm-meta">${origem} · ${dataHora(i.criadoEm)}</span>
-                </header>
-                ${colecao === 'agendas' ? avisoConflito(i) : ''}
-                <div class="adm-campos">${camposDe(colecao, i)}</div>
-                <footer class="adm-acoes">${acoesDe(colecao, i)}</footer>
+            <article class="adm-item st-${esc(i.status)}">
+                <div class="adm-row ms">
+                    <div class="adm-c"><strong>${esc(i.nome)}</strong><span class="adm-sub">${origemTxt(i)}</span></div>
+                    <div class="adm-c"><span class="adm-sub" title="${esc(i.mensagem)}">${esc(i.mensagem)}</span></div>
+                    <div class="adm-c adm-c-acoes">${acoesDe(colecao, i)}</div>
+                </div>
+                <details class="adm-det"><summary>Ler mensagem completa</summary>
+                    <div class="adm-det-corpo">${detalhe('Mensagem', esc(i.mensagem), true)}</div>
+                </details>
             </article>`;
     }
 
+    const RESUMO = [
+        { aba: 'agendas', filtro: 'pendente', cor: 'c-ouro', rotulo: 'Agendas pendentes', conta: () => dados.agendas.filter((i) => i.status === 'pendente').length },
+        { aba: 'agendas', filtro: 'validada', cor: 'c-ok', rotulo: 'Agendas validadas', conta: () => dados.agendas.filter((i) => i.status === 'validada').length },
+        { aba: 'inscricoes', filtro: 'pendente', cor: 'c-roxo', rotulo: 'Inscrições pendentes', conta: () => dados.inscricoes.filter((i) => i.status === 'pendente').length },
+        { aba: 'mensagens', filtro: 'nova', cor: 'c-azul', rotulo: 'Mensagens novas', conta: () => dados.mensagens.filter((i) => i.status === 'nova').length }
+    ];
+
     function render() {
+        document.getElementById('admResumo').innerHTML = RESUMO
+            .map((r) => `<button type="button" class="adm-stat ${r.cor}" data-aba="${r.aba}" data-filtro="${r.filtro}"><b>${r.conta()}</b><span>${r.rotulo}</span></button>`)
+            .join('');
+
         document.querySelectorAll('.adm-tab').forEach((botao) => {
             const aba = botao.getAttribute('data-aba');
             botao.classList.toggle('ativa', aba === abaAtiva);
             const pendentes = dados[aba].filter((i) => i.status === COLECOES[aba].pendente).length;
-            const selo = botao.querySelector('.adm-selo');
-            selo.textContent = pendentes;
-            selo.hidden = pendentes === 0;
+            const seloAba = botao.querySelector('.adm-selo');
+            seloAba.textContent = pendentes;
+            seloAba.hidden = pendentes === 0;
         });
 
         Object.keys(COLECOES).forEach((colecao) => {
-            const painel = document.getElementById('admAba-' + colecao);
-            painel.hidden = colecao !== abaAtiva;
+            document.getElementById('admAba-' + colecao).hidden = colecao !== abaAtiva;
 
             document.getElementById('admFiltros-' + colecao).innerHTML = COLECOES[colecao].filtros
                 .map(([valor, rotulo]) => {
@@ -249,6 +272,14 @@
 
     /* ---------------- ações (validar, recusar, excluir) ---------------- */
     painelBox.addEventListener('click', async (e) => {
+        const stat = e.target.closest('.adm-stat');
+        if (stat) {
+            abaAtiva = stat.getAttribute('data-aba');
+            filtro[abaAtiva] = stat.getAttribute('data-filtro');
+            render();
+            return;
+        }
+
         const chip = e.target.closest('.adm-chip');
         if (chip) {
             filtro[chip.getAttribute('data-colecao')] = chip.getAttribute('data-filtro');
