@@ -22,11 +22,11 @@ module.exports = async function handler(req, res) {
     const body = lib.lerCorpo(req);
     if (!body) return res.status(400).json({ ok: false, erro: 'Dados inválidos.' });
 
-    if (!process.env.ADMIN_PASSWORD) {
+    if (!lib.conf('senha')) {
         return res.status(500).json({ ok: false, erro: 'Painel não configurado: falta a variável ADMIN_PASSWORD na Vercel.' });
     }
     if (!lib.redisAtivo()) {
-        return res.status(500).json({ ok: false, erro: 'Banco de dados não configurado na Vercel (Upstash Redis).' });
+        return res.status(500).json({ ok: false, erro: 'Banco de dados não configurado na Vercel (falta a variável REDIS_URL).' });
     }
 
     try {
@@ -85,6 +85,10 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ ok: false, erro: 'Ação desconhecida.' });
     } catch (err) {
         console.error('Erro no painel:', err.message);
-        return res.status(502).json({ ok: false, erro: 'Falha ao acessar o banco de dados.' });
+        const m = String(err.message || '');
+        let erro = 'Falha ao acessar o banco de dados.';
+        if (/unauthor|wrongpass|noauth|invalid.*token/i.test(m)) erro = 'O banco recusou o acesso: confira a senha/token do banco na Vercel (REDIS_URL).';
+        else if (/enotfound|invalid url|eai_again|econnrefused/i.test(m)) erro = 'Endereço do banco inválido: confira o valor de REDIS_URL na Vercel.';
+        return res.status(502).json({ ok: false, erro });
     }
 };
