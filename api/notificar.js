@@ -1,85 +1,88 @@
 /**
- * Função serverless da Vercel: recebe os formulários de AGENDA e TRABALHE CONOSCO
- * e envia o aviso direto para o WhatsApp do músico, sem abrir o WhatsApp para o visitante.
+ * Recebe os formulários de AGENDA, TRABALHE CONOSCO e "Deixe uma mensagem".
+ *  1) Guarda o registro no banco (aparece no Painel do administrador para validar).
+ *  2) Avisa o músico no WhatsApp, sem abrir o WhatsApp do visitante.
  *
- * Variáveis de ambiente (Vercel > Settings > Environment Variables):
- *   CALLMEBOT_APIKEY   chave gerada pelo CallMeBot para o número que recebe os avisos
- *   WHATSAPP_DESTINO   (opcional) número que recebe, com 55 + DDD. Padrão: 5521977041825
+ * Variáveis de ambiente: CALLMEBOT_APIKEY, WHATSAPP_DESTINO (opcional) e as do banco (ver _lib.js).
  */
-
 const https = require('https');
+const lib = require('./_lib');
 
-const DESTINO = (process.env.WHATSAPP_DESTINO || '5521977041825').replace(/\D/g, '');
+const { linha, texto } = lib;
+
+const DESTINO = (lib.conf('destino') || '5521977041825').replace(/\D/g, '');
 const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-
-// Limite simples por IP (funciona por instância; barra abuso básico)
-const historico = new Map();
-const LIMITE = 5;
-const JANELA_MS = 10 * 60 * 1000;
-
-function excedeuLimite(ip) {
-    const agora = Date.now();
-    const lista = (historico.get(ip) || []).filter(t => agora - t < JANELA_MS);
-    lista.push(agora);
-    historico.set(ip, lista);
-    return lista.length > LIMITE;
-}
-
-const linha = (v, max = 160) =>
-    String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
-
-const texto = (v, max = 500) =>
-    String(v ?? '').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, ' ').trim().slice(0, max);
 
 function origem(secao, url, referer) {
     const link = linha(url || referer || 'não informado', 200);
     return `📍 *Origem:* Site JBMusic › ${secao}\n🔗 ${link}`;
 }
 
-function montarMensagem(b, referer) {
+/** Valida o pedido e devolve o que será guardado e a mensagem do WhatsApp (ou null se inválido). */
+function preparar(b) {
     if (b.tipo === 'agenda') {
-        const [ano, mes, dia] = linha(b.data, 10).split('-').map(Number);
-        if (!ano || !mes || !dia) return null;
+        const a = lib.validarAgenda(b);
+        if (!a) return null;
+        const [ano, mes, dia] = a.data.split('-').map(Number);
         const semana = DIAS[new Date(ano, mes - 1, dia).getDay()];
-        const campos = [b.nome, b.cargo, b.contato, b.igreja, b.endereco, b.horario];
-        if (campos.some(c => !linha(c))) return null;
-        return (
-            `📅 *NOVA SOLICITAÇÃO DE AGENDA*\n` +
-            `${origem('Agenda', b.origem, referer)}\n\n` +
-            `⛪ *Igreja:* ${linha(b.igreja)}\n` +
-            `📌 *Endereço:* ${linha(b.endereco)}\n` +
-            `📆 *Dia:* ${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano} (${semana})\n` +
-            `🕒 *Horário:* ${linha(b.horario, 10)}\n` +
-            `👤 *Responsável:* ${linha(b.nome)} (${linha(b.cargo)})\n` +
-            `📞 *Contato:* ${linha(b.contato, 20)}`
-        );
+        return {
+            colecao: 'agendas',
+            dados: a,
+            status: 'pendente',
+            secao: 'Agenda',
+            montar: (orig) =>
+                `📅 *NOVA SOLICITAÇÃO DE AGENDA*\n${orig}\n\n` +
+                `⛪ *Igreja:* ${a.igreja}\n` +
+                `📌 *Endereço:* ${a.endereco}\n` +
+                `📆 *Dia:* ${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano} (${semana})\n` +
+                `🕒 *Horário:* ${a.horario}\n` +
+                `👤 *Responsável:* ${a.nome} (${a.cargo})\n` +
+                `📞 *Contato:* ${a.contato}`
+        };
     }
 
     if (b.tipo === 'trabalhe') {
-        const campos = [b.nome, b.contato, b.idade, b.email, b.endereco, b.igreja, b.enderecoIgreja, b.mensagem];
-        if (campos.some(c => !linha(c))) return null;
-        return (
-            `🎤 *NOVA INSCRIÇÃO - TRABALHE CONOSCO*\n` +
-            `${origem('Trabalhe conosco', b.origem, referer)}\n\n` +
-            `👤 *Nome:* ${linha(b.nome)}\n` +
-            `📞 *Contato:* ${linha(b.contato, 20)}\n` +
-            `🎂 *Idade:* ${linha(b.idade, 3)}\n` +
-            `✉️ *E-mail:* ${linha(b.email)}\n` +
-            `🏠 *Endereço:* ${linha(b.endereco)}\n` +
-            `⛪ *Igreja:* ${linha(b.igreja)}\n` +
-            `📌 *Endereço da igreja:* ${linha(b.enderecoIgreja)}\n\n` +
-            `💬 *Sobre mim:* ${texto(b.mensagem, 400)}`
-        );
+        const d = {
+            nome: linha(b.nome, 80),
+            contato: linha(b.contato, 20),
+            idade: linha(b.idade, 3),
+            email: linha(b.email, 120),
+            endereco: linha(b.endereco, 160),
+            igreja: linha(b.igreja, 100),
+            enderecoIgreja: linha(b.enderecoIgreja, 160),
+            mensagem: texto(b.mensagem, 400)
+        };
+        if (Object.values(d).some((v) => !v)) return null;
+        return {
+            colecao: 'inscricoes',
+            dados: d,
+            status: 'pendente',
+            secao: 'Trabalhe conosco',
+            montar: (orig) =>
+                `🎤 *NOVA INSCRIÇÃO - TRABALHE CONOSCO*\n${orig}\n\n` +
+                `👤 *Nome:* ${d.nome}\n` +
+                `📞 *Contato:* ${d.contato}\n` +
+                `🎂 *Idade:* ${d.idade}\n` +
+                `✉️ *E-mail:* ${d.email}\n` +
+                `🏠 *Endereço:* ${d.endereco}\n` +
+                `⛪ *Igreja:* ${d.igreja}\n` +
+                `📌 *Endereço da igreja:* ${d.enderecoIgreja}\n\n` +
+                `💬 *Sobre mim:* ${d.mensagem}`
+        };
     }
 
     if (b.tipo === 'contato') {
-        if (!linha(b.nome) || !texto(b.mensagem, 800)) return null;
-        return (
-            `💬 *NOVA MENSAGEM DO SITE*\n` +
-            `${origem('Formulário "Deixe uma mensagem"', b.origem, referer)}\n\n` +
-            `👤 *Nome:* ${linha(b.nome)}\n\n` +
-            `${texto(b.mensagem, 800)}`
-        );
+        const d = { nome: linha(b.nome, 80), mensagem: texto(b.mensagem, 800) };
+        if (!d.nome || !d.mensagem) return null;
+        return {
+            colecao: 'mensagens',
+            dados: d,
+            status: 'nova',
+            secao: 'Formulário "Deixe uma mensagem"',
+            montar: (orig) =>
+                `💬 *NOVA MENSAGEM DO SITE*\n${orig}\n\n` +
+                `👤 *Nome:* ${d.nome}\n\n${d.mensagem}`
+        };
     }
 
     return null;
@@ -105,11 +108,12 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ ok: false, erro: 'Método não permitido.' });
     }
 
-    let body = req.body;
-    if (typeof body === 'string') {
-        try { body = JSON.parse(body); } catch (e) { body = null; }
+    if (!lib.origemPermitida(req)) {
+        return res.status(403).json({ ok: false, erro: 'Origem não permitida.' });
     }
-    if (!body || typeof body !== 'object') {
+
+    const body = lib.lerCorpo(req);
+    if (!body) {
         return res.status(400).json({ ok: false, erro: 'Dados inválidos.' });
     }
 
@@ -118,41 +122,54 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
     }
 
-    const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'desconhecido';
-    if (excedeuLimite(ip)) {
+    if (await lib.limitar(`notificar:${lib.ipDe(req)}`, 5, 600)) {
         return res.status(429).json({ ok: false, erro: 'Muitas tentativas. Aguarde alguns minutos.' });
     }
 
-    const mensagem = montarMensagem(body, req.headers.referer);
-    if (!mensagem) {
+    const pedido = preparar(body);
+    if (!pedido) {
         return res.status(400).json({ ok: false, erro: 'Preencha todos os campos.' });
     }
 
-    const apikey = process.env.CALLMEBOT_APIKEY;
+    // 1) Guarda no banco para aparecer no painel do administrador
+    let salvo = false;
+    if (lib.redisAtivo()) {
+        try {
+            await lib.salvar(pedido.colecao, lib.novoRegistro(pedido.dados, pedido.status, 'site'));
+            salvo = true;
+        } catch (err) {
+            console.error('Falha ao salvar no banco:', err.message);
+        }
+    }
+
+    // 2) Avisa no WhatsApp do músico
+    let painel = '';
+    if (salvo) painel = `\n\n🔎 *Validar no painel:* https://${req.headers.host}/admin.html`;
+    else if (lib.redisAtivo()) painel = '\n\n⚠️ *Atenção:* esta solicitação NÃO foi salva no painel (erro no banco de dados). Veja os logs da Vercel.';
+    const mensagem = pedido.montar(origem(pedido.secao, body.origem, req.headers.referer)) + painel;
+
+    // Sem banco, o log é a única cópia dos dados: registra para não perder a mensagem.
+    if (!salvo) console.log('[notificar] (sem banco) mensagem:\n' + mensagem);
+
+    let enviado = false;
+    const apikey = lib.conf('callmebot');
     if (!apikey) {
         console.error('CALLMEBOT_APIKEY não configurada na Vercel.');
-        return res.status(500).json({ ok: false, erro: 'Envio não configurado.' });
-    }
-
-    try {
-        const url =
-            `https://api.callmebot.com/whatsapp.php?phone=${DESTINO}` +
-            `&text=${encodeURIComponent(mensagem)}&apikey=${encodeURIComponent(apikey)}`;
-        const { status, corpo } = await chamarCallMeBot(url);
-
-        // Registrado sempre: se o CallMeBot/WhatsApp falhar silenciosamente, os dados
-        // enviados pela pessoa ainda ficam recuperáveis aqui (Vercel > Logs).
-        console.log('[notificar] tipo:', body.tipo, '| status CallMeBot:', status, '| resposta:', corpo.slice(0, 300));
-        console.log('[notificar] mensagem completa:\n' + mensagem);
-
-        if (status < 200 || status >= 300 || /error|invalid|not authorized/i.test(corpo)) {
-            console.error('Falha CallMeBot:', status, corpo.slice(0, 200));
-            return res.status(502).json({ ok: false, erro: 'Não foi possível enviar agora.' });
+    } else {
+        try {
+            const url =
+                `https://api.callmebot.com/whatsapp.php?phone=${DESTINO}` +
+                `&text=${encodeURIComponent(mensagem)}&apikey=${encodeURIComponent(apikey)}`;
+            const { status, corpo } = await chamarCallMeBot(url);
+            console.log('[notificar] tipo:', body.tipo, '| salvo:', salvo, '| CallMeBot:', status, corpo.slice(0, 120));
+            enviado = status >= 200 && status < 300 && !/error|invalid|not authorized/i.test(corpo);
+            if (!enviado) console.error('Falha CallMeBot:', status, corpo.slice(0, 200));
+        } catch (err) {
+            console.error('Erro ao enviar aviso:', err.message);
         }
-
-        return res.status(200).json({ ok: true });
-    } catch (err) {
-        console.error('Erro ao enviar aviso:', err);
-        return res.status(502).json({ ok: false, erro: 'Não foi possível enviar agora.' });
     }
+
+    // Sucesso se o dado está seguro no painel OU se o aviso chegou no WhatsApp
+    if (salvo || enviado) return res.status(200).json({ ok: true, painel: salvo });
+    return res.status(502).json({ ok: false, erro: 'Não foi possível enviar agora.' });
 };
