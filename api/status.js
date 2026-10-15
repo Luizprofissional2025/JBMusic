@@ -22,14 +22,29 @@ module.exports = async function handler(req, res) {
         }
     }
 
+    // Teste de escrita: grava, lê e apaga um registro de teste (confirma que as agendas conseguem ser salvas)
+    let escrita = ligado ? 'não testado (sem conexão)' : 'não testado (banco não configurado)';
+    if (ligado && conexao === 'OK') {
+        try {
+            await lib.redis(['HSET', 'jb:teste', 'x', 'ok']);
+            const lido = await lib.redis(['HGET', 'jb:teste', 'x']);
+            await lib.redis(['HDEL', 'jb:teste', 'x']);
+            escrita = lido === 'ok' ? 'OK' : 'FALHOU: valor lido diferente do gravado';
+        } catch (err) {
+            escrita = 'FALHOU: ' + String(err.message).slice(0, 80);
+        }
+    }
+
     const sim = (v) => (v ? 'OK' : 'FALTA');
     const resultado = {
         ADMIN_PASSWORD: sim(lib.conf('senha')),
         banco_de_dados_variaveis: sim(ligado),
         banco_de_dados_tipo: ligado ? (lib.redisModo() === 'tcp' ? 'REDIS_URL (conexão direta)' : 'REST (Upstash)') : '-',
         banco_de_dados_conexao: conexao,
+        banco_de_dados_escrita: escrita,
         CALLMEBOT_APIKEY: sim(lib.conf('callmebot'))
     };
-    resultado.tudo_certo = resultado.ADMIN_PASSWORD === 'OK' && conexao === 'OK' && resultado.CALLMEBOT_APIKEY === 'OK';
+    resultado.versao_api = 'painel-2026-10-15';
+    resultado.tudo_certo = resultado.ADMIN_PASSWORD === 'OK' && conexao === 'OK' && escrita === 'OK' && resultado.CALLMEBOT_APIKEY === 'OK';
     return res.status(200).json(resultado);
 };
