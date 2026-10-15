@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const publico = process.env.AGENDA_CONTATO_PUBLICO === 'true';
+        const publico = lib.conf('contatoPublico').toLowerCase() === 'true';
         const todas = await lib.listar('agendas');
         const agendas = todas
             .filter((a) => a.status === 'validada')
